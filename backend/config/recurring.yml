@@ -1,0 +1,9 @@
+---
+production:
+  VacuumJob:
+    class: VacuumJob
+    schedule: every 1 hour
+development:
+  RebuildObjTableJob:
+    class: RebuildObjTableJob
+    schedule: every 30 minutes

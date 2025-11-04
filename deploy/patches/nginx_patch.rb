@@ -1,0 +1,83 @@
+class NginxPatch < BasePatch
+  class << self
+    def always
+      $instance.install_package("nginx")
+      Cmd.ssh_write('/etc/nginx/nginx.conf', nginx_config, sudo: true)
+      $instance.restart_service("nginx")
+    end
+
+    private
+
+    def nginx_config
+      <<~TEXT
+        worker_processes 2;
+
+        events {
+          worker_connections 1024;
+        }
+
+        http {
+          types_hash_max_size 4096;
+          server_names_hash_bucket_size 128;
+          include mime.types;
+          default_type application/octet-stream;
+          sendfile on;
+          keepalive_timeout 65;
+          gzip on;
+          gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript image/svg+xml;
+          gzip_vary on;
+
+          server {
+            listen 127.0.0.1:80;
+            listen [::1]:80;
+
+            location /nginx_status {
+              stub_status on;
+              access_log off;
+              allow 127.0.0.1;
+              deny all;
+            }
+          }
+
+          server {
+            listen 80;
+            listen [::]:80;
+            server_name #{$constants.domain};
+            return 301 https://$server_name$request_uri;
+          }
+
+          server {
+            server_name #{$constants.domain};
+            listen 443 ssl http2;
+            include /etc/letsencrypt/options-ssl-nginx.conf;
+            ssl_certificate /etc/letsencrypt/live/#{$constants.domain}/fullchain.pem;
+            ssl_certificate_key /etc/letsencrypt/live/#{$constants.domain}/privkey.pem;
+            ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+            ssl_stapling on;
+            ssl_stapling_verify on;
+
+            root #{$constants.remote_root}/frontend/dist;
+            index index.html;
+
+            location / {
+              try_files $uri /index.html;
+            }
+
+            location /assets/ {
+              expires max;
+              add_header Cache-Control "public, max-age=31536000, immutable";
+            }
+
+            location /api/ {
+              proxy_pass http://localhost:3000;
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-Host $host;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            }
+          }
+        }
+      TEXT
+    end
+  end
+end

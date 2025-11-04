@@ -1,0 +1,19 @@
+{
+  "folders": [
+    { "path": "." },
+    { "path": "backend" },
+    { "path": "frontend" },
+    { "path": "deploy" },
+    { "path": "sync" },
+    { "path": "gems" }
+  ],
+  "settings": {
+    "files.exclude": {
+      "backend": true,
+      "frontend": true,
+      "deploy": true,
+      "sync": true,
+      "gems": true
+    }
+  }
+}

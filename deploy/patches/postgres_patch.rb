@@ -1,0 +1,68 @@
+class PostgresPatch < BasePatch
+  class << self
+    def needed?
+      return true if $instance.not_installed?("psql")
+      return true if !user_exists?
+      return true if !db_exists?
+
+      false
+    end
+
+    def apply
+      if $instance.not_installed?("psql")
+        # https://gist.github.com/ammarshah/40535b7e6c76597bda58afece875b7e6
+        Cmd.ssh("sudo apt install curl ca-certificates")
+        Cmd.ssh("sudo install -d /usr/share/postgresql-common/pgdg")
+        Cmd.ssh(
+          "sudo curl -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc --fail https://www.postgresql.org/media/keys/ACCC4CF8.asc"
+        )
+        Cmd.ssh(
+          "sudo sh -c 'echo \"deb [arch=amd64 signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main\" > /etc/apt/sources.list.d/pgdg.list'"
+        )
+        Cmd.ssh("sudo DEBIAN_FRONTEND=noninteractive apt update")
+        Cmd.ssh("sudo DEBIAN_FRONTEND=noninteractive apt-get -y install postgresql-17 libpq-dev")
+        $instance.start_service("postgresql")
+      end
+
+      Cmd.ssh_write(pg_hba_conf_path, pg_hba_conf, sudo: true)
+
+      Cmd.ssh("sudo -u postgres createuser -s #{$constants.deploy_user}") unless user_exists?
+
+      Cmd.ssh("sudo -u postgres createdb #{$constants.db_name}") unless db_exists?
+
+      $instance.restart_service("postgresql")
+    end
+
+    private
+
+    def pg_hba_conf_path = "/etc/postgresql/17/main/pg_hba.conf"
+
+    def pg_hba_conf = <<~TEXT
+      local   all             postgres                                peer
+      local   all             all                                     peer
+      host    all             all             127.0.0.1/32            trust
+      host    all             all             ::1/128                 trust
+      local   replication     all                                     trust
+      host    replication     all             127.0.0.1/32            trust
+      host    replication     all             ::1/128                 trust
+    TEXT
+
+    def user_exists?
+      Cmd
+        .ssh("sudo -u postgres psql -c \"SELECT 'asstits' FROM pg_roles WHERE rolname = '#{$constants.deploy_user}'\"")
+        .include?("asstits")
+    rescue StandardError => e
+      puts e.message
+      false
+    end
+
+    def db_exists?
+      Cmd
+        .ssh("sudo -u postgres psql -l | grep #{$constants.db_name}")
+        .include?("#{$constants.db_name}")
+    rescue StandardError => e
+      puts e.message
+      false
+    end
+  end
+end

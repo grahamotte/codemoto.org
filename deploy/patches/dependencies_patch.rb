@@ -1,0 +1,85 @@
+class DependenciesPatch < BasePatch
+  class << self
+    def always
+      $instance.install_package("ffmpeg")
+      $instance.install_package("imagemagick", bin: "convert")
+
+      if $instance.not_installed?("yt-dlp")
+        Cmd.ssh(
+          "sudo curl -L https://github.com/yt-dlp/yt-dlp-master-builds/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp"
+        )
+        Cmd.ssh("sudo chmod a+rx /usr/local/bin/yt-dlp")
+        Cmd.ssh("yt-dlp --version")
+      end
+
+      if $instance.not_installed?("gallery-dl")
+        Cmd.ssh(
+          "sudo curl -L https://github.com/mikf/gallery-dl/releases/latest/download/gallery-dl.bin -o /usr/local/bin/gallery-dl"
+        )
+        Cmd.ssh("sudo chmod a+rx /usr/local/bin/gallery-dl")
+        Cmd.ssh("gallery-dl --version")
+      end
+
+      unless $instance.installed?("mise")
+        Cmd.ssh("sudo apt update -y && sudo apt install -y gpg sudo wget curl")
+        Cmd.ssh("sudo install -dm 755 /etc/apt/keyrings")
+        Cmd.ssh("wget -qO - https://mise.jdx.dev/gpg-key.pub | gpg --dearmor | sudo tee /etc/apt/keyrings/mise-archive-keyring.gpg 1> /dev/null")
+        Cmd.ssh("echo 'deb [signed-by=/etc/apt/keyrings/mise-archive-keyring.gpg arch=amd64] https://mise.jdx.dev/deb stable main' | sudo tee /etc/apt/sources.list.d/mise.list")
+        Cmd.ssh("sudo apt update")
+        Cmd.ssh("sudo apt install -y mise")
+        Cmd.ssh("mise settings add idiomatic_version_file_enable_tools \"[]\"")
+      end
+    end
+
+    def needed?
+      tool_versions.each do |package, version|
+        return true if version_not_installed?(package, version)
+      end
+
+      false
+    end
+
+    def apply
+      Cmd.ssh("sudo apt-get install -y autoconf bison build-essential gcc libffi-dev libgdbm-dev libjemalloc-dev libncurses5-dev libreadline-dev libssl-dev libyaml-dev make zlib1g-dev")
+      Cmd.ssh("mkdir -p ~/tmp")
+      Cmd.ssh([
+        "cd ?",
+        "export TMPDIR=~/tmp",
+        "export RUBY_CONFIGURE_OPTS='--with-jemalloc'",
+        "mise install --yes",
+      ].join(" && "), $constants.remote_root)
+    end
+
+    private
+
+    def version_installed?(package, version)
+      current_versions[package.to_sym]
+        .find { |ver| ver[:version] == version && ver[:installed] }
+        .present?
+    rescue StandardError => e
+      puts e.message
+      false
+    end
+
+    def version_not_installed?(package, version)
+      !version_installed?(package, version)
+    end
+
+    def current_versions
+      @current_versions ||= begin
+        JSON.parse(Cmd.ssh("mise list --json"), symbolize_names: true)
+      rescue StandardError => e
+        puts e.message
+        {}
+      end
+    end
+
+    def tool_versions
+      File
+        .join($constants.local_root, '.tool-versions')
+        .then { |x| File.readlines(x) }
+        .map(&:split)
+        .to_h
+    end
+  end
+end

@@ -1,0 +1,30 @@
+{
+  "plugins": ["react", "typescript", "oxc"],
+  "categories": {
+    "correctness": "off",
+    "suspicious": "off",
+    "pedantic": "off",
+    "perf": "off",
+    "style": "off",
+    "restriction": "off",
+    "nursery": "off"
+  },
+  "rules": {
+    "typescript/no-floating-promises": "error",
+    "react/rules-of-hooks": "error",
+    "no-restricted-imports": [
+      "error",
+      {
+        "paths": [
+          {
+            "name": "lucide-react",
+            "importNames": ["Trash", "TrashIcon"],
+            "message": "Use Trash2 instead of Trash."
+          }
+        ]
+      }
+    ]
+  },
+  "type-aware": true,
+  "tsconfig": "./tsconfig.json"
+}

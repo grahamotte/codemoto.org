@@ -1,0 +1,249 @@
+[env]
+_.file = '.env'
+
+#
+# Dependencies
+#
+
+[tasks."dependencies:backend"]
+run = "cd backend && bundle install"
+
+[tasks."dependencies:frontend"]
+run = "cd frontend && bun install"
+
+[tasks."dependencies:deploy"]
+run = "cd deploy && bundle install"
+
+[tasks."dependencies:sync"]
+run = "cd sync && bundle install"
+
+[tasks."dependencies:gems"]
+run = "for dir in gems/*/; do (cd \"$dir\" && bundle install); done"
+
+[tasks.dependencies]
+depends = ["dependencies:*"]
+
+#
+# Reset
+#
+
+[tasks."reset:logs"]
+run = [
+  "find sync/log -type f -mtime +7 -exec rm -v {} \\;",
+  "find deploy/log -type f -mtime +7 -exec rm -v {} \\;"
+]
+
+[tasks."reset:db"]
+depends = ["dependencies:backend"]
+run = [
+  "cd backend && rails db:drop",
+  "cd backend && rails db:create",
+  "cd backend && rails db:migrate",
+  "cd backend && rails runner script/reset.rb",
+]
+
+[tasks."reset:frontend"]
+run = [
+  "cd frontend && rm -rf build || true",
+  "cd frontend && rm -rf dist || true",
+  "cd frontend && rm -rf node_modules || true",
+  "cd frontend && rm -rf .vite || true",
+  "cd frontend && rm -rf .react-router || true",
+  "cd frontend && bun install",
+]
+
+[tasks."reset"]
+depends = ["reset:*"]
+
+#
+# DB
+#
+
+[tasks."db:add:migration"]
+depends = ["dependencies:backend"]
+run = 'cd backend && rails g migration {{arg(name="name")}}'
+
+[tasks."db:reset"]
+depends = ["reset:db"]
+
+[tasks."db:migrate"]
+alias = ["migrate"]
+depends = ["dependencies:backend"]
+run = "cd backend && rails db:migrate"
+
+[tasks."db:rollback"]
+alias = ["rollback"]
+depends = ["dependencies:backend"]
+run = "cd backend && rails db:rollback"
+
+#
+# Start
+#
+
+[tasks."start:api"]
+depends = ["dependencies:backend", "migrate"]
+run = "cd backend && bin/rails server --port 3000"
+
+[tasks."start:job"]
+depends = ["dependencies:backend", "migrate"]
+run = "cd backend && bin/jobs"
+
+[tasks."start:frontend"]
+depends = ["dependencies:frontend"]
+run = "cd frontend && bun vite"
+
+[tasks.start]
+depends = ["start:*"]
+
+#
+# Console
+#
+
+[tasks.console]
+depends = ["dependencies:backend"]
+run = "cd backend && rails console"
+
+[tasks."console:sync"]
+depends = ["dependencies:sync"]
+run = "cd sync && ruby pry.rb"
+
+[tasks."console:production"]
+depends = ["dependencies:deploy"]
+run = "set -a && source .env.production && cd deploy && ruby fix.rb"
+
+#
+# Profile
+#
+
+[tasks.profile]
+depends = ["dependencies"]
+usage = '''
+arg "<file>" help="File to profile (e.g., sync/pry.rb or backend/test/models/job_test.rb)"
+'''
+run = '''
+file="$usage_file"
+
+dir=$(dirname "$file")
+while [[ "$dir" != "." && "$dir" != "/" ]]; do
+  if [[ -f "$dir/Gemfile" ]]; then
+    project_root="$dir"
+    break
+  fi
+  dir=$(dirname "$dir")
+done
+
+if [[ -z "$project_root" ]]; then
+  echo "Error: Could not find Gemfile for $file"
+  exit 1
+fi
+
+cd "$project_root"
+
+rel_file="${file#$project_root/}"
+
+if [[ "$(basename "$file")" == *_test.rb ]]; then
+  ruby_cmd="ruby -I test"
+else
+  ruby_cmd="ruby"
+fi
+
+rm -f /tmp/profile.json
+PROFILING=true vernier run --output=/tmp/profile.json -- bundle exec $ruby_cmd "$rel_file"
+
+if [[ "$CURSOR_AGENT" == "1" ]]; then
+  LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 vernier view --top 100 -- /tmp/profile.json
+else
+  profile-viewer /tmp/profile.json
+fi
+'''
+
+#
+# Test
+#
+
+[tasks."test:backend"]
+depends = ["dependencies:backend"]
+run = [
+  "cd backend && bundle exec rubocop",
+  "cd backend && rails test"
+]
+
+[tasks."test:frontend"]
+depends = ["dependencies:frontend"]
+run = [
+  "cd frontend && bunx oxlint src --type-aware --react-plugin --config=.oxlintrc.json",
+  "cd frontend && bun tsc",
+  # "cd frontend && bun test"
+]
+
+[tasks."test:sync"]
+depends = ["dependencies:sync"]
+run = [
+  "cd sync && bundle exec rubocop",
+  "cd sync && bundle exec ruby -Itest -e 'Dir.glob(\"test/**/*_test.rb\").each { |f| require_relative f }'"
+]
+
+[tasks."test:gems"]
+depends = ["dependencies:gems"]
+run = "for dir in gems/*/; do (cd \"$dir\" && bundle exec rubocop && bundle exec ruby -Itest -e 'Dir.glob(\"test/**/*_test.rb\").each { |f| require_relative f }'); done"
+
+[tasks."test"]
+depends = ["test:*"]
+
+#
+# Deploy
+#
+
+[tasks."deploy"]
+depends = ["dependencies:deploy"]
+run = "set -a && source .env.production && cd deploy && ruby deploy.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_deploy.log"
+
+[tasks."deploy:quick"]
+alias = ["quick"]
+depends = ["dependencies:deploy"]
+run = "set -a && source .env.production && cd deploy && ruby quick.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_quick.log"
+
+[tasks."deploy:destroy"]
+depends = ["dependencies:deploy"]
+run = "set -a && source .env.production && cd deploy && ruby destroy.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_destroy.log"
+
+[tasks."deploy:log"]
+depends = ["dependencies:deploy"]
+run = "set -a && source .env.production && cd deploy && ruby log.rb"
+
+[tasks."deploy:ssh"]
+alias = ["ssh"]
+depends = ["dependencies:deploy"]
+run = "set -a && source .env.production && cd deploy && ruby ssh.rb"
+
+[tasks."deploy:fix"]
+depends = ["console:production"]
+
+[tasks."deploy:htop"]
+depends = ["dependencies:deploy"]
+run = "set -a && source .env.production && cd deploy && ruby htop.rb"
+
+[tasks."deploy:backup"]
+depends = ["dependencies:deploy"]
+run = "set -a && source .env.production && cd deploy && ruby backup.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_backup.log"
+
+[tasks."deploy:restore"]
+depends = ["dependencies:deploy"]
+run = "set -a && source .env.production && cd deploy && ruby restore.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_restore.log"
+
+[tasks."deploy:pry"]
+depends = ["dependencies:deploy"]
+run = "set -a && source .env.production && cd deploy && ruby pry.rb"
+
+#
+# Sync
+#
+
+[tasks."sync:cookies"]
+depends = ["dependencies:sync"]
+run = "cd sync && ruby cookies.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_cookies.log"
+
+[tasks."sync:mirror"]
+alias = ["mirror"]
+depends = ["dependencies:sync"]
+run = "cd sync && ruby mirror.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_mirror.log"

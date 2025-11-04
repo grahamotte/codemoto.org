@@ -1,0 +1,19 @@
+require "bundler/setup"
+Bundler.require(:default)
+
+$root_dir = File.dirname(__FILE__).then { |x| File.dirname(x) }
+
+require_relative "core_extensions"
+require_relative "constants"
+require_relative "req"
+require_relative "cmd"
+require_relative "instance"
+
+require_relative "../patches/base_patch"
+File
+  .join($root_dir, "patches")
+  .then { |x| Dir.glob(File.join(x, "*.rb")) }
+  .each { |x| require x }
+
+$constants = Constants.new
+$instance = Instance.new

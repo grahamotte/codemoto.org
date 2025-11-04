@@ -1,0 +1,22 @@
+ENV["RAILS_ENV"] = "test"
+require_relative "../config/environment"
+require "rails/test_help"
+require "mocha/minitest"
+require "webmock/minitest"
+require "pry"
+
+BCrypt::Engine.cost = BCrypt::Engine::MIN_COST
+
+ENV["CRYPT_KEY"] = "test_key_123"
+
+module ActiveSupport
+  class TestCase
+    parallelize(workers: :number_of_processors) unless ENV["PROFILE"]
+
+    def setup
+      WebMock.reset!
+      WebMock::StubRegistry.instance.instance_variable_get(:@request_stubs).clear
+      WebMock.disable_net_connect!(allow_localhost: true)
+    end
+  end
+end
