@@ -8,8 +8,8 @@ class DeployUserPatch < BasePatch
     end
 
     def apply
-      user = $constants.deploy_user
-      pass = $constants.deploy_password
+      user = Constants.deploy_user
+      pass = Constants.deploy_password
 
       # sudo user
       Cmd.ssh("useradd #{user} -m", user: "root")
@@ -19,9 +19,9 @@ class DeployUserPatch < BasePatch
 
       # keyfile
       Cmd.ssh("cp -r ~/.ssh /home/#{user}/", user: "root")
-      Cmd.ssh_write("/home/#{user}/.ssh/id_rsa", $constants.ssh_key, user: "root")
+      Cmd.ssh_write("/home/#{user}/.ssh/id_rsa", Constants.ssh_key, user: "root")
       Cmd.ssh("chmod 400 /home/#{user}/.ssh/id_rsa", user: "root")
-      Cmd.ssh_write("/home/#{user}/.ssh/id_rsa.pub", $constants.ssh_key, user: "root")
+      Cmd.ssh_write("/home/#{user}/.ssh/id_rsa.pub", Constants.ssh_key, user: "root")
       Cmd.ssh("chmod 400 /home/#{user}/.ssh/id_rsa.pub", user: "root")
       Cmd.ssh("chown -R #{user}:#{user} /home/#{user}/", user: "root")
       Cmd.ssh("sed -i -e '$a\\' /home/#{user}/.ssh/authorized_keys", user: "root")

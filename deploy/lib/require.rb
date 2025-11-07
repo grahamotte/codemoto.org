@@ -14,6 +14,3 @@ File
   .join($root_dir, "patches")
   .then { |x| Dir.glob(File.join(x, "*.rb")) }
   .each { |x| require x }
-
-$constants = Constants.new
-$instance = Instance.new

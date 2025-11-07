@@ -14,9 +14,6 @@ run = "cd frontend && bun install"
 [tasks."dependencies:deploy"]
 run = "cd deploy && bundle install"
 
-[tasks."dependencies:sync"]
-run = "cd sync && bundle install"
-
 [tasks."dependencies:gems"]
 run = "for dir in gems/*/; do (cd \"$dir\" && bundle install); done"
 
@@ -28,10 +25,7 @@ depends = ["dependencies:*"]
 #
 
 [tasks."reset:logs"]
-run = [
-  "find sync/log -type f -mtime +7 -exec rm -v {} \\;",
-  "find deploy/log -type f -mtime +7 -exec rm -v {} \\;"
-]
+run = "find */log -type f -mtime +7 -exec rm -v {} \\;"
 
 [tasks."reset:db"]
 depends = ["dependencies:backend"]
@@ -52,7 +46,7 @@ run = [
   "cd frontend && bun install",
 ]
 
-[tasks."reset"]
+[tasks.reset]
 depends = ["reset:*"]
 
 #
@@ -103,10 +97,6 @@ depends = ["start:*"]
 depends = ["dependencies:backend"]
 run = "cd backend && rails console"
 
-[tasks."console:sync"]
-depends = ["dependencies:sync"]
-run = "cd sync && ruby pry.rb"
-
 [tasks."console:production"]
 depends = ["dependencies:deploy"]
 run = "set -a && source .env.production && cd deploy && ruby fix.rb"
@@ -118,7 +108,7 @@ run = "set -a && source .env.production && cd deploy && ruby fix.rb"
 [tasks.profile]
 depends = ["dependencies"]
 usage = '''
-arg "<file>" help="File to profile (e.g., sync/pry.rb or backend/test/models/job_test.rb)"
+arg "<file>" help="File to profile (e.g., backend/test/models/job_test.rb)"
 '''
 run = '''
 file="$usage_file"
@@ -176,13 +166,6 @@ run = [
   # "cd frontend && bun test"
 ]
 
-[tasks."test:sync"]
-depends = ["dependencies:sync"]
-run = [
-  "cd sync && bundle exec rubocop",
-  "cd sync && bundle exec ruby -Itest -e 'Dir.glob(\"test/**/*_test.rb\").each { |f| require_relative f }'"
-]
-
 [tasks."test:gems"]
 depends = ["dependencies:gems"]
 run = "for dir in gems/*/; do (cd \"$dir\" && bundle exec rubocop && bundle exec ruby -Itest -e 'Dir.glob(\"test/**/*_test.rb\").each { |f| require_relative f }'); done"
@@ -236,14 +219,14 @@ depends = ["dependencies:deploy"]
 run = "set -a && source .env.production && cd deploy && ruby pry.rb"
 
 #
-# Sync
+# Other
 #
 
-[tasks."sync:cookies"]
-depends = ["dependencies:sync"]
-run = "cd sync && ruby cookies.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_cookies.log"
-
-[tasks."sync:mirror"]
-alias = ["mirror"]
-depends = ["dependencies:sync"]
-run = "cd sync && ruby mirror.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_mirror.log"
+[tasks.rebase]
+run = [
+  "git remote remove upstream || true",
+  "git remote add upstream git@github.com:grahamotte/codemoto.org.git",
+  "git fetch upstream",
+  "git checkout main",
+  "git rebase upstream/main",
+]

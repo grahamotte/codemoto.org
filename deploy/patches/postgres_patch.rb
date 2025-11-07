@@ -1,7 +1,7 @@
 class PostgresPatch < BasePatch
   class << self
     def needed?
-      return true if $instance.not_installed?("psql")
+      return true if Instance.not_installed?("psql")
       return true if !user_exists?
       return true if !db_exists?
 
@@ -9,7 +9,7 @@ class PostgresPatch < BasePatch
     end
 
     def apply
-      if $instance.not_installed?("psql")
+      if Instance.not_installed?("psql")
         # https://gist.github.com/ammarshah/40535b7e6c76597bda58afece875b7e6
         Cmd.ssh("sudo apt install curl ca-certificates")
         Cmd.ssh("sudo install -d /usr/share/postgresql-common/pgdg")
@@ -21,16 +21,16 @@ class PostgresPatch < BasePatch
         )
         Cmd.ssh("sudo DEBIAN_FRONTEND=noninteractive apt update")
         Cmd.ssh("sudo DEBIAN_FRONTEND=noninteractive apt-get -y install postgresql-17 libpq-dev")
-        $instance.start_service("postgresql")
+        Instance.start_service("postgresql")
       end
 
       Cmd.ssh_write(pg_hba_conf_path, pg_hba_conf, sudo: true)
 
-      Cmd.ssh("sudo -u postgres createuser -s #{$constants.deploy_user}") unless user_exists?
+      Cmd.ssh("sudo -u postgres createuser -s #{Constants.deploy_user}") unless user_exists?
 
-      Cmd.ssh("sudo -u postgres createdb #{$constants.db_name}") unless db_exists?
+      Cmd.ssh("sudo -u postgres createdb #{Constants.db_name}") unless db_exists?
 
-      $instance.restart_service("postgresql")
+      Instance.restart_service("postgresql")
     end
 
     private
@@ -49,7 +49,7 @@ class PostgresPatch < BasePatch
 
     def user_exists?
       Cmd
-        .ssh("sudo -u postgres psql -c \"SELECT 'asstits' FROM pg_roles WHERE rolname = '#{$constants.deploy_user}'\"")
+        .ssh("sudo -u postgres psql -c \"SELECT 'asstits' FROM pg_roles WHERE rolname = '#{Constants.deploy_user}'\"")
         .include?("asstits")
     rescue StandardError => e
       puts e.message
@@ -58,8 +58,8 @@ class PostgresPatch < BasePatch
 
     def db_exists?
       Cmd
-        .ssh("sudo -u postgres psql -l | grep #{$constants.db_name}")
-        .include?("#{$constants.db_name}")
+        .ssh("sudo -u postgres psql -l | grep #{Constants.db_name}")
+        .include?("#{Constants.db_name}")
     rescue StandardError => e
       puts e.message
       false

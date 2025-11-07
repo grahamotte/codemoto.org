@@ -4,8 +4,8 @@ cmd = [
   "ssh",
   "-t",
   "-i",
-  $constants.ssh_key_path,
-  "#{$constants.deploy_user}@#{$instance.ip}",
+  Constants.ssh_key_path,
+  "#{Constants.deploy_user}@#{Instance.ip}",
   'htop',
 ]
 puts cmd.join(" ")

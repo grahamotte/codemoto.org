@@ -11,7 +11,7 @@ class Cmd
       res
     end
 
-    def ssh(command, *opts, user: $constants.deploy_user)
+    def ssh(command, *opts, user: Constants.deploy_user)
       command = command.split("?").zip(opts.map { |x| Shellwords.escape(x) }).flatten.join if opts.present?
       command = command.gsub("\\*", "*")
 
@@ -20,7 +20,7 @@ class Cmd
       text = ""
       code = 0
 
-      Net::SSH.start($instance.ip, user, keys: [ $constants.ssh_key_path ], keys_only: true) do |s|
+      Net::SSH.start(Instance.ip, user, keys: [ Constants.ssh_key_path ], keys_only: true) do |s|
         s.open_channel do |channel|
           channel.exec(command) do
             channel.on_data { |_, x| print(x); text += x }
@@ -36,7 +36,7 @@ class Cmd
       text
     end
 
-    def ssh_write(path, content, user: $constants.deploy_user, sudo: false)
+    def ssh_write(path, content, user: Constants.deploy_user, sudo: false)
       if Cache.unchanged?(path, content)
         puts "SSH skip write #{path} because it hasn't changed"
         return
@@ -46,7 +46,7 @@ class Cmd
       tmp_local_path = "/tmp/#{SecureRandom.hex(16)}"
       File.write(tmp_local_path, content)
       bash = sudo && user != "root" ? "sudo bash" : "bash"
-      local("rsync -av -e \"ssh -i ?\" ? #{user}@#{$instance.ip}:?", $constants.ssh_key_path, tmp_local_path, tmp_remote_path, user:)
+      local("rsync -av -e \"ssh -i ?\" ? #{user}@#{Instance.ip}:?", Constants.ssh_key_path, tmp_local_path, tmp_remote_path, user:)
       ssh("#{bash} -c 'cat ? > ?'", tmp_remote_path, path, user:)
       ssh("rm #{tmp_remote_path}", user:)
       Cache.set(path, content)

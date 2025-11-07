@@ -2,35 +2,35 @@ class AppPatch < BasePatch
   class << self
     def always
       Cache.if_files_changed(File.expand_path("../frontend/bun.lock")) do
-        Cmd.ssh("cd #{$constants.remote_root}/frontend; mise exec -- bun install")
+        Cmd.ssh("cd #{Constants.remote_root}/frontend; mise exec -- bun install")
       end
 
       Cache.if_files_changed(File.expand_path("../backend/Gemfile.lock")) do
-        Cmd.ssh("cd #{$constants.remote_root}/backend; mise exec -- bundle install")
+        Cmd.ssh("cd #{Constants.remote_root}/backend; mise exec -- bundle install")
       end
 
-      $instance.stop_service("api")
-      $instance.stop_service("job")
+      Instance.stop_service("api")
+      Instance.stop_service("job")
 
       Cache.if_files_changed(Dir.glob(File.expand_path("../backend/db/migrate/*"))) do
-        Cmd.ssh("cd #{$constants.remote_root}/backend; set -a; source ../.env; mise exec -- bin/rails db:migrate")
+        Cmd.ssh("cd #{Constants.remote_root}/backend; set -a; source ../.env; mise exec -- bin/rails db:migrate")
       end
 
-      Cmd.ssh("cd #{$constants.remote_root}/backend; set -a; source ../.env; mise exec -- bin/rails runner 'DeployResetter.call'")
+      Cmd.ssh("cd #{Constants.remote_root}/backend; set -a; source ../.env; mise exec -- bin/rails runner 'DeployResetter.call'")
       Cmd.ssh("rm -rf ~/tmp")
 
-      $instance.write_service("api", api_service)
-      $instance.write_service("job", job_service)
+      Instance.write_service("api", api_service)
+      Instance.write_service("job", job_service)
       Cmd.ssh("sudo systemctl start api.service")
       Cmd.ssh("sudo systemctl start job.service")
 
 
-      Cmd.ssh("cd #{$constants.remote_root}/frontend; set -a; source ../.env; mise exec -- bun vite build")
-      # Cmd.local("cd #{$constants.local_root}; set -a; source .env.production; cd frontend; mise exec -- bun vite build")
-      # Cmd.local("rsync -av -e \"ssh -i #{$constants.ssh_key_path}\" #{$constants.local_root}/frontend/dist/ #{$constants.deploy_user}@#{$instance.ip}:#{$constants.remote_root}/frontend/dist/")
+      Cmd.ssh("cd #{Constants.remote_root}/frontend; set -a; source ../.env; mise exec -- bun vite build")
+      # Cmd.local("cd #{Constants.local_root}; set -a; source .env.production; cd frontend; mise exec -- bun vite build")
+      # Cmd.local("rsync -av -e \"ssh -i #{Constants.ssh_key_path}\" #{Constants.local_root}/frontend/dist/ #{Constants.deploy_user}@#{Instance.ip}:#{Constants.remote_root}/frontend/dist/")
 
       begin
-        Req.call(method: :post, url: "https://#{$constants.domain}/api/noop/ping")
+        Req.call(method: :post, url: "https://#{Constants.domain}/api/noop/ping")
       rescue StandardError => e
         puts "#{e.message} - waiting for rails to start..."
         sleep 1
@@ -47,9 +47,9 @@ class AppPatch < BasePatch
       After=network-online-target
 
       [Service]
-      User=#{$constants.deploy_user}
+      User=#{Constants.deploy_user}
       Type=simple
-      ExecStart=/usr/bin/bash -c 'cd #{$constants.remote_root}/backend && set -a && source ../.env && mise exec -- bin/rails server --port 3000'
+      ExecStart=/usr/bin/bash -c 'cd #{Constants.remote_root}/backend && set -a && source ../.env && mise exec -- bin/rails server --port 3000'
       Restart=always
 
       [Install]
@@ -63,9 +63,9 @@ class AppPatch < BasePatch
       After=network-online-target
 
       [Service]
-      User=#{$constants.deploy_user}
+      User=#{Constants.deploy_user}
       Type=simple
-      ExecStart=/usr/bin/bash -c 'cd #{$constants.remote_root}/backend && set -a && source ../.env && mise exec -- bin/jobs'
+      ExecStart=/usr/bin/bash -c 'cd #{Constants.remote_root}/backend && set -a && source ../.env && mise exec -- bin/jobs'
       Restart=always
 
       [Install]

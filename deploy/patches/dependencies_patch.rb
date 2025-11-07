@@ -1,10 +1,10 @@
 class DependenciesPatch < BasePatch
   class << self
     def always
-      $instance.install_package("ffmpeg")
-      $instance.install_package("imagemagick", bin: "convert")
+      Instance.install_package("ffmpeg")
+      Instance.install_package("imagemagick", bin: "convert")
 
-      if $instance.not_installed?("yt-dlp")
+      if Instance.not_installed?("yt-dlp")
         Cmd.ssh(
           "sudo curl -L https://github.com/yt-dlp/yt-dlp-master-builds/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp"
         )
@@ -12,7 +12,7 @@ class DependenciesPatch < BasePatch
         Cmd.ssh("yt-dlp --version")
       end
 
-      if $instance.not_installed?("gallery-dl")
+      if Instance.not_installed?("gallery-dl")
         Cmd.ssh(
           "sudo curl -L https://github.com/mikf/gallery-dl/releases/latest/download/gallery-dl.bin -o /usr/local/bin/gallery-dl"
         )
@@ -20,7 +20,7 @@ class DependenciesPatch < BasePatch
         Cmd.ssh("gallery-dl --version")
       end
 
-      unless $instance.installed?("mise")
+      unless Instance.installed?("mise")
         Cmd.ssh("sudo apt update -y && sudo apt install -y gpg sudo wget curl")
         Cmd.ssh("sudo install -dm 755 /etc/apt/keyrings")
         Cmd.ssh("wget -qO - https://mise.jdx.dev/gpg-key.pub | gpg --dearmor | sudo tee /etc/apt/keyrings/mise-archive-keyring.gpg 1> /dev/null")
@@ -40,6 +40,7 @@ class DependenciesPatch < BasePatch
     end
 
     def apply
+      Cmd.ssh("cd #{Constants.remote_root} && mise -y trust -a")
       Cmd.ssh("sudo apt-get install -y autoconf bison build-essential gcc libffi-dev libgdbm-dev libjemalloc-dev libncurses5-dev libreadline-dev libssl-dev libyaml-dev make zlib1g-dev")
       Cmd.ssh("mkdir -p ~/tmp")
       Cmd.ssh([
@@ -47,7 +48,7 @@ class DependenciesPatch < BasePatch
         "export TMPDIR=~/tmp",
         "export RUBY_CONFIGURE_OPTS='--with-jemalloc'",
         "mise install --yes",
-      ].join(" && "), $constants.remote_root)
+      ].join(" && "), Constants.remote_root)
     end
 
     private
@@ -76,7 +77,7 @@ class DependenciesPatch < BasePatch
 
     def tool_versions
       File
-        .join($constants.local_root, '.tool-versions')
+        .join(Constants.local_root, '.tool-versions')
         .then { |x| File.readlines(x) }
         .map(&:split)
         .to_h

@@ -1,7 +1,7 @@
 class MetricsPatch < BasePatch
   class << self
     def needed?
-      !$instance.service_running?("do-agent")
+      !Instance.service_running?("do-agent")
     end
 
     def apply

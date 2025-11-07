@@ -1,9 +1,9 @@
 class NginxPatch < BasePatch
   class << self
     def always
-      $instance.install_package("nginx")
+      Instance.install_package("nginx")
       Cmd.ssh_write('/etc/nginx/nginx.conf', nginx_config, sudo: true)
-      $instance.restart_service("nginx")
+      Instance.restart_service("nginx")
     end
 
     private
@@ -42,21 +42,21 @@ class NginxPatch < BasePatch
           server {
             listen 80;
             listen [::]:80;
-            server_name #{$constants.domain};
+            server_name #{Constants.domain};
             return 301 https://$server_name$request_uri;
           }
 
           server {
-            server_name #{$constants.domain};
+            server_name #{Constants.domain};
             listen 443 ssl http2;
             include /etc/letsencrypt/options-ssl-nginx.conf;
-            ssl_certificate /etc/letsencrypt/live/#{$constants.domain}/fullchain.pem;
-            ssl_certificate_key /etc/letsencrypt/live/#{$constants.domain}/privkey.pem;
+            ssl_certificate /etc/letsencrypt/live/#{Constants.domain}/fullchain.pem;
+            ssl_certificate_key /etc/letsencrypt/live/#{Constants.domain}/privkey.pem;
             ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
             ssl_stapling on;
             ssl_stapling_verify on;
 
-            root #{$constants.remote_root}/frontend/dist;
+            root #{Constants.remote_root}/frontend/dist;
             index index.html;
 
             location / {

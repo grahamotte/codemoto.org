@@ -1,20 +1,20 @@
 class DbBackupPatch < BasePatch
   class << self
     def always
-      Cmd.ssh("sudo apt-get install -y awscli") unless $instance.installed?('aws')
+      Cmd.ssh("sudo apt-get install -y awscli") unless Instance.installed?('aws')
 
-      key = "#{$constants.db_name}_#{Time.now.to_i}.sql"
-      path = File.join($constants.remote_home_dir, key)
+      key = "#{Constants.db_name}_#{Time.now.to_i}.sql"
+      path = File.join(Constants.remote_home_dir, key)
 
-      Cmd.ssh("/usr/bin/pg_dump -U #{$constants.deploy_user} --clean #{$constants.db_name} > #{path}")
+      Cmd.ssh("/usr/bin/pg_dump -U #{Constants.deploy_user} --clean #{Constants.db_name} > #{path}")
 
       Cmd.ssh(
         [
-          "export AWS_ACCESS_KEY_ID=#{$constants.backup_access_key_id};",
-          "export AWS_SECRET_ACCESS_KEY=#{$constants.backup_secret_access_key};",
+          "export AWS_ACCESS_KEY_ID=#{Constants.backup_access_key_id};",
+          "export AWS_SECRET_ACCESS_KEY=#{Constants.backup_secret_access_key};",
           "export AWS_REQUEST_CHECKSUM_CALCULATION=WHEN_REQUIRED;",
           "export AWS_RESPONSE_CHECKSUM_VALIDATION=WHEN_REQUIRED;",
-          "aws --endpoint-url #{$constants.backup_endpoint} s3 cp #{path} s3://#{$constants.backup_bucket}/#{key}",
+          "aws --endpoint-url #{Constants.backup_endpoint} s3 cp #{path} s3://#{Constants.backup_bucket}/#{key}",
         ].join(" ")
       )
 

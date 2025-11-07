@@ -1,15 +1,15 @@
 class DbRestorePatch < BasePatch
   class << self
     def always
-      Cmd.ssh("sudo apt-get install -y awscli") unless $instance.installed?("aws")
+      Cmd.ssh("sudo apt-get install -y awscli") unless Instance.installed?("aws")
 
       key = backup_keys.last
-      path = File.join($constants.remote_home_dir, key)
+      path = File.join(Constants.remote_home_dir, key)
 
-      aws_cmd("s3 cp s3://#{$constants.backup_bucket}/#{key} #{path}")
+      aws_cmd("s3 cp s3://#{Constants.backup_bucket}/#{key} #{path}")
 
-      Cmd.ssh("psql #{$constants.db_name} < #{path}")
-      $instance.start_service(:postgresql)
+      Cmd.ssh("psql #{Constants.db_name} < #{path}")
+      Instance.start_service(:postgresql)
 
       Cmd.ssh("rm -f #{path}")
     end
@@ -19,24 +19,24 @@ class DbRestorePatch < BasePatch
     def aws_cmd(cmd)
       Cmd.ssh(
         [
-          "export AWS_ACCESS_KEY_ID=#{$constants.backup_access_key_id};",
-          "export AWS_SECRET_ACCESS_KEY=#{$constants.backup_secret_access_key};",
+          "export AWS_ACCESS_KEY_ID=#{Constants.backup_access_key_id};",
+          "export AWS_SECRET_ACCESS_KEY=#{Constants.backup_secret_access_key};",
           "export AWS_REQUEST_CHECKSUM_CALCULATION=WHEN_REQUIRED;",
           "export AWS_RESPONSE_CHECKSUM_VALIDATION=WHEN_REQUIRED;",
-          "aws --endpoint-url #{$constants.backup_endpoint}",
+          "aws --endpoint-url #{Constants.backup_endpoint}",
           cmd,
         ].join(" ")
       )
     end
 
     def backup_keys
-      result = aws_cmd("s3 ls s3://#{$constants.backup_bucket}/")
+      result = aws_cmd("s3 ls s3://#{Constants.backup_bucket}/")
 
       result
         .split("\n")
         .map(&:split)
         .map(&:last)
-        .select { |x| x.present? && x.start_with?($constants.db_name) }
+        .select { |x| x.present? && x.start_with?(Constants.db_name) }
         .sort
     end
   end

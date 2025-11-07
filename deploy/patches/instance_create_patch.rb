@@ -1,24 +1,24 @@
 class InstanceCreatePatch < BasePatch
   class << self
     def needed?
-      !$instance.running?
+      !Instance.running?
     end
 
     def apply
       Cache.clear
-      $instance.clear
-      $instance.create
+      Instance.clear
+      Instance.create
 
       loop do
         break if instance_ready?
         sleep 4
       end
 
-      Cmd.local("ssh-keygen -R #{$instance.ip}")
-      Cmd.local("ssh-keygen -R #{$constants.domain}")
+      Cmd.local("ssh-keygen -R #{Instance.ip}")
+      Cmd.local("ssh-keygen -R #{Constants.domain}")
       begin
-        Cmd.local("ssh-keyscan -H #{$instance.ip} >> ~/.ssh/known_hosts")
-        Cmd.local("ssh-keyscan -H #{$constants.domain} >> ~/.ssh/known_hosts")
+        Cmd.local("ssh-keyscan -H #{Instance.ip} >> ~/.ssh/known_hosts")
+        Cmd.local("ssh-keyscan -H #{Constants.domain} >> ~/.ssh/known_hosts")
       rescue StandardError
       end
     end
@@ -26,8 +26,8 @@ class InstanceCreatePatch < BasePatch
     private
 
     def instance_ready?
-      $instance.clear
-      return false unless $instance.running?
+      Instance.clear
+      return false unless Instance.running?
 
       begin
         res = Cmd.ssh("echo !ass!tits!", user: "root")

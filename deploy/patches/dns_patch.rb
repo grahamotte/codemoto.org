@@ -12,7 +12,7 @@ class DnsPatch < BasePatch
           url: "https://api.cloudflare.com/client/v4/zones",
           headers: cf_headers,
           quiet: true,
-          payload: { name: $constants.domain },
+          payload: { name: Constants.domain },
         )
 
         sleep 5
@@ -48,7 +48,7 @@ class DnsPatch < BasePatch
           quiet: true,
         )
         .dig(:result)
-        .find { |x| x[:name] == $constants.domain }
+        .find { |x| x[:name] == Constants.domain }
         .dig(:id)
     rescue StandardError => e
       puts e.message
@@ -67,7 +67,7 @@ class DnsPatch < BasePatch
 
     def fingerprint(record)
       [
-        record[:name].end_with?($constants.domain) ? record[:name] : "#{record[:name]}.#{$constants.domain}",
+        record[:name].end_with?(Constants.domain) ? record[:name] : "#{record[:name]}.#{Constants.domain}",
         record[:type],
         record[:content],
       ].join(" :: ")
@@ -75,7 +75,7 @@ class DnsPatch < BasePatch
 
     def cf_headers
       {
-        Authorization: "Bearer #{$constants.cloudflare_token}",
+        Authorization: "Bearer #{Constants.cloudflare_token}",
         "Content-Type": "application/json",
       }
     end
@@ -84,21 +84,21 @@ class DnsPatch < BasePatch
       [
         {
           type: "A",
-          name: $constants.domain,
-          content: $instance.ip,
+          name: Constants.domain,
+          content: Instance.ip,
           proxied: false,
           ttl: 1,
         },
         {
           type: "A",
-          name: "www.#{$constants.domain}",
-          content: $instance.ip,
+          name: "www.#{Constants.domain}",
+          content: Instance.ip,
           proxied: false,
           ttl: 1,
         },
         {
           type: "MX",
-          name: $constants.domain,
+          name: Constants.domain,
           priority: 10,
           content: "in1-smtp.messagingengine.com",
           proxied: false,
@@ -106,7 +106,7 @@ class DnsPatch < BasePatch
         },
         {
           type: "MX",
-          name: $constants.domain,
+          name: Constants.domain,
           priority: 20,
           content: "in2-smtp.messagingengine.com",
           proxied: false,
@@ -114,28 +114,28 @@ class DnsPatch < BasePatch
         },
         {
           type: "CNAME",
-          name: "fm1._domainkey.#{$constants.domain}",
-          content: "fm1.#{$constants.domain}.dkim.fmhosted.com",
+          name: "fm1._domainkey.#{Constants.domain}",
+          content: "fm1.#{Constants.domain}.dkim.fmhosted.com",
           proxied: false,
           ttl: 1,
         },
         {
           type: "CNAME",
-          name: "fm2._domainkey.#{$constants.domain}",
-          content: "fm2.#{$constants.domain}.dkim.fmhosted.com",
+          name: "fm2._domainkey.#{Constants.domain}",
+          content: "fm2.#{Constants.domain}.dkim.fmhosted.com",
           proxied: false,
           ttl: 1,
         },
         {
           type: "CNAME",
-          name: "fm3._domainkey.#{$constants.domain}",
-          content: "fm3.#{$constants.domain}.dkim.fmhosted.com",
+          name: "fm3._domainkey.#{Constants.domain}",
+          content: "fm3.#{Constants.domain}.dkim.fmhosted.com",
           proxied: false,
           ttl: 1,
         },
         {
           type: "TXT",
-          name: $constants.domain,
+          name: Constants.domain,
           content: "v=spf1 include:spf.messagingengine.com ?all",
           proxied: false,
           ttl: 1,

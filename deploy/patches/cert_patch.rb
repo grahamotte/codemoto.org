@@ -7,28 +7,28 @@ class CertPatch < BasePatch
     end
 
     def apply
-      $instance.install_package("nginx")
-      $instance.stop_service("nginx")
+      Instance.install_package("nginx")
+      Instance.stop_service("nginx")
       Cmd.ssh_write("/etc/nginx/nginx.conf", default_nginx_conf, sudo: true)
       Cmd.ssh("sudo fuser -k 80/tcp || true")
-      $instance.start_service("nginx")
+      Instance.start_service("nginx")
       Cmd.ssh("sudo nginx -t")
 
-      if $instance.not_installed?("certbot")
+      if Instance.not_installed?("certbot")
         Cmd.ssh("sudo snap install --classic certbot")
         Cmd.ssh("sudo ln -s /snap/bin/certbot /usr/bin/certbot")
       end
 
       Cmd.ssh("sudo rm -rf /etc/letsencrypt")
-      Cmd.ssh("sudo certbot --nginx certonly --non-interactive --agree-tos -m cert@#{$constants.domain} -d #{$constants.domain} -d www.#{$constants.domain}")
-      $instance.stop_service("nginx")
+      Cmd.ssh("sudo certbot --nginx certonly --non-interactive --agree-tos -m cert@#{Constants.domain} -d #{Constants.domain} -d www.#{Constants.domain}")
+      Instance.stop_service("nginx")
     end
 
     private
 
     def cert_expires_on
       Cmd
-        .ssh("sudo cat /etc/letsencrypt/live/#{$constants.domain}/fullchain.pem | openssl x509 -noout -enddate")
+        .ssh("sudo cat /etc/letsencrypt/live/#{Constants.domain}/fullchain.pem | openssl x509 -noout -enddate")
         .split("=")
         .last
         .then { |x| Date.parse(x) }

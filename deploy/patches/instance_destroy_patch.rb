@@ -1,7 +1,7 @@
 class InstanceDestroyPatch < BasePatch
   class << self
     def always
-      $instance.destroy
+      Instance.destroy
     end
   end
 end
