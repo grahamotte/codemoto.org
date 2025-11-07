@@ -219,14 +219,19 @@ depends = ["dependencies:deploy"]
 run = "set -a && source .env.production && cd deploy && ruby pry.rb"
 
 #
-# Other
+# Special
 #
 
 [tasks.rebase]
 run = [
+  "if [ -n \"$(git status --porcelain)\" ]; then echo 'Error: You have unstaged changes. Please commit or stash them before rebasing.'; exit 1; fi",
   "git remote remove upstream || true",
   "git remote add upstream git@github.com:grahamotte/codemoto.org.git",
   "git fetch upstream",
-  "git checkout main",
-  "git rebase upstream/main",
+  "git checkout master",
+  "git rebase upstream/master",
 ]
+
+#
+# Other
+#
