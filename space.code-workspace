@@ -4,16 +4,16 @@
     { "path": "backend" },
     { "path": "frontend" },
     { "path": "deploy" },
-    { "path": "sync" },
-    { "path": "gems" }
+    { "path": "gems" },
+    { "path": "scripts" }
   ],
   "settings": {
     "files.exclude": {
       "backend": true,
       "frontend": true,
       "deploy": true,
-      "sync": true,
-      "gems": true
+      "gems": true,
+      "scripts": true
     }
   }
 }
