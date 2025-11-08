@@ -1,6 +1,25 @@
 import { req } from "@/lib/req";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
+
+const useInterval = (callback: () => void, delay: number | null) => {
+  const savedCallback = useRef<(() => void) | undefined>(undefined);
+
+  useEffect(() => {
+    savedCallback.current = callback;
+  }, [callback]);
+
+  useEffect(() => {
+    const tick = () => {
+      savedCallback.current?.();
+    };
+
+    if (delay !== null) {
+      const id = setInterval(tick, delay);
+      return () => clearInterval(id);
+    }
+  }, [delay]);
+};
 
 export const Hc = () => {
   const [data, setData] = useState<{
@@ -41,7 +60,7 @@ export const Hc = () => {
     }));
   }, []);
 
-  useEffect(() => {
+  const fetchData = () => {
     req({
       url: "/api/noop/hc",
       params: { frontendTime: new Date().toISOString() },
@@ -53,7 +72,15 @@ export const Hc = () => {
     })
       .then((data) => setData(data))
       .catch((error) => console.error(error));
+  };
+
+  useEffect(() => {
+    fetchData();
   }, []);
+
+  useInterval(() => {
+    fetchData();
+  }, 1000);
 
   if (!data) return null;
 
@@ -106,6 +133,10 @@ export const Hc = () => {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-3px); }
         }
+        @keyframes star-twinkle {
+          0%, 100% { opacity: 0.3; transform: scale(1); filter: brightness(1); }
+          50% { opacity: 1; transform: scale(1.3); filter: brightness(1.5); }
+        }
         .animate-float-gentle {
           animation: float-gentle 4s ease-in-out infinite;
         }
@@ -142,6 +173,9 @@ export const Hc = () => {
         }
         .animate-text-bounce {
           animation: text-bounce 2s ease-in-out infinite;
+        }
+        .animate-star-twinkle {
+          animation: star-twinkle 2s ease-in-out infinite;
         }
       `}</style>
       <div className="h-screen w-screen flex items-center justify-center bg-black relative overflow-hidden">
