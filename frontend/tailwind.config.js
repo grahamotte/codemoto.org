@@ -22,6 +22,17 @@ export default {
         "corner-pulse-delay-1": "corner-pulse 2s ease-in-out infinite 0.5s",
         "corner-pulse-delay-2": "corner-pulse 2s ease-in-out infinite 1s",
         "corner-pulse-delay-3": "corner-pulse 2s ease-in-out infinite 1.5s",
+        "card-entrance": "card-entrance 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards",
+        "title-entrance": "title-entrance 1s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s both",
+        "star-twinkle": "star-twinkle 2s ease-in-out infinite",
+        "nebula-float": "nebula-float 20s ease-in-out infinite",
+        "float-gentle": "float-gentle 4s ease-in-out infinite",
+        "card-float": "card-float 6s ease-in-out infinite",
+        "border-pulse": "border-pulse 3s ease-in-out infinite",
+        "radial-pulse": "radial-pulse 4s ease-in-out infinite",
+        "pulse-glow-text": "pulse-glow-text 2s ease-in-out infinite",
+        "pulse-glow-text-delay-1": "pulse-glow-text 2s ease-in-out infinite 0.3s",
+        "pulse-glow-text-delay-2": "pulse-glow-text 2s ease-in-out infinite 0.6s",
       },
       keyframes: {
         float: {
@@ -59,6 +70,43 @@ export default {
         "corner-pulse": {
           "0%, 100%": { opacity: "0.6", transform: "scale(1)" },
           "50%": { opacity: "1", transform: "scale(1.1)" },
+        },
+        "card-entrance": {
+          "0%": { opacity: "0", transform: "scale(0.8) translateY(20px)" },
+          "100%": { opacity: "1", transform: "scale(1) translateY(0)" },
+        },
+        "title-entrance": {
+          "0%": { opacity: "0", transform: "scale(0.5) rotate(-5deg)" },
+          "100%": { opacity: "1", transform: "scale(1) rotate(0deg)" },
+        },
+        "star-twinkle": {
+          "0%, 100%": { opacity: "0.3", transform: "scale(1)" },
+          "50%": { opacity: "1", transform: "scale(1.2)" },
+        },
+        "nebula-float": {
+          "0%, 100%": { transform: "translate(0, 0) scale(1)" },
+          "33%": { transform: "translate(30px, -30px) scale(1.1)" },
+          "66%": { transform: "translate(-20px, 20px) scale(0.9)" },
+        },
+        "float-gentle": {
+          "0%, 100%": { transform: "translateY(0px)" },
+          "50%": { transform: "translateY(-8px)" },
+        },
+        "card-float": {
+          "0%, 100%": { transform: "translateY(0px) rotate(0deg)" },
+          "50%": { transform: "translateY(-10px) rotate(0.5deg)" },
+        },
+        "border-pulse": {
+          "0%, 100%": { borderColor: "rgba(255, 255, 255, 0.1)", opacity: "1" },
+          "50%": { borderColor: "rgba(255, 255, 255, 0.3)", opacity: "1" },
+        },
+        "radial-pulse": {
+          "0%, 100%": { opacity: "0.5" },
+          "50%": { opacity: "1" },
+        },
+        "pulse-glow-text": {
+          "0%, 100%": { opacity: "0.8", filter: "brightness(1)" },
+          "50%": { opacity: "1", filter: "brightness(1.3)" },
         },
       },
     },
