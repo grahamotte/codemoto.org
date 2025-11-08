@@ -2,7 +2,7 @@ import * as Sentry from "@sentry/react";
 import ReactDOM from "react-dom/client";
 import { Helmet } from "react-helmet";
 import { BrowserRouter, Route, Routes } from "react-router";
-import { HealthCheck } from "./pages/health_check";
+import { Hc } from "./pages/hc";
 
 declare const VITE_RELEASE: string;
 
@@ -18,14 +18,14 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <BrowserRouter>
     <Routes>
       <Route
-        path="/health_check"
+        path="/hc"
         element={
           <>
             <Helmet>
               <title>Health Check</title>
             </Helmet>
 
-            <HealthCheck />
+            <Hc />
           </>
         }
       />

@@ -14,3 +14,15 @@ html {
     cursor: pointer;
   }
 }
+
+@layer utilities {
+  .animate-text-shimmer {
+    background-size: 200% auto;
+    animation: text-shimmer 2s linear infinite;
+  }
+
+  .animate-text-shimmer-reverse {
+    background-size: 200% auto;
+    animation: text-shimmer-reverse 2s linear infinite;
+  }
+}
