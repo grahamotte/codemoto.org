@@ -30,6 +30,7 @@ run = "find */log -type f -mtime +7 -exec rm -v {} \\;"
 [tasks."reset:db"]
 depends = ["dependencies:backend"]
 run = [
+  "cd backend && rm -rf db/schema.rb",
   "cd backend && rails db:drop",
   "cd backend && rails db:create",
   "cd backend && rails db:migrate",
