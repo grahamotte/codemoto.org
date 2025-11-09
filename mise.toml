@@ -218,6 +218,11 @@ run = "set -a && source .env.production && cd deploy && ruby restore.rb 2>&1 | t
 depends = ["dependencies:deploy"]
 run = "set -a && source .env.production && cd deploy && ruby pry.rb"
 
+[tasks."deploy:status"]
+alias = ["status"]
+depends = ["dependencies:deploy"]
+run = "set -a && source .env.production && cd deploy && ruby status.rb"
+
 #
 # Special
 #
