@@ -102,52 +102,6 @@ depends = ["dependencies:deploy"]
 run = "set -a && source .env.production && cd deploy && ruby fix.rb"
 
 #
-# Profile
-#
-
-[tasks.profile]
-depends = ["dependencies"]
-usage = '''
-arg "<file>" help="File to profile (e.g., backend/test/models/job_test.rb)"
-'''
-run = '''
-file="$usage_file"
-
-dir=$(dirname "$file")
-while [[ "$dir" != "." && "$dir" != "/" ]]; do
-  if [[ -f "$dir/Gemfile" ]]; then
-    project_root="$dir"
-    break
-  fi
-  dir=$(dirname "$dir")
-done
-
-if [[ -z "$project_root" ]]; then
-  echo "Error: Could not find Gemfile for $file"
-  exit 1
-fi
-
-cd "$project_root"
-
-rel_file="${file#$project_root/}"
-
-if [[ "$(basename "$file")" == *_test.rb ]]; then
-  ruby_cmd="ruby -I test"
-else
-  ruby_cmd="ruby"
-fi
-
-rm -f /tmp/profile.json
-PROFILING=true vernier run --output=/tmp/profile.json -- bundle exec $ruby_cmd "$rel_file"
-
-if [[ "$CURSOR_AGENT" == "1" ]]; then
-  LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 vernier view --top 100 -- /tmp/profile.json
-else
-  profile-viewer /tmp/profile.json
-fi
-'''
-
-#
 # Test
 #
 
@@ -224,8 +178,15 @@ depends = ["dependencies:deploy"]
 run = "set -a && source .env.production && cd deploy && ruby status.rb"
 
 #
-# Special
+# Other
 #
+
+[tasks.profile]
+depends = ["dependencies"]
+usage = '''
+arg "<file>" help="File to profile (e.g., backend/test/models/job_test.rb)"
+'''
+run = "bash scripts/ruby_profile.sh \"$usage_file\""
 
 [tasks.rebase]
 run = [
@@ -238,5 +199,5 @@ run = [
 ]
 
 #
-# Other
+# Application
 #
