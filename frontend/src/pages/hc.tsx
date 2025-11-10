@@ -27,6 +27,7 @@ export const Hc = () => {
     backendTime: string;
     databaseTime: string;
   } | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const stars = useMemo(() => {
     return Array.from({ length: 150 }, () => ({
@@ -70,8 +71,13 @@ export const Hc = () => {
         databaseTime: z.string(),
       }),
     })
-      .then((data) => setData(data))
-      .catch((error) => console.error(error));
+      .then((data) => {
+        setData(data);
+        setError(null);
+      })
+      .catch((error) => {
+        setError(error instanceof Error ? error.message : String(error));
+      });
   };
 
   useEffect(() => {
@@ -82,7 +88,7 @@ export const Hc = () => {
     fetchData();
   }, 1000);
 
-  if (!data) return null;
+  if (!data && !error) return null;
 
   return (
     <>
@@ -137,6 +143,32 @@ export const Hc = () => {
           0%, 100% { opacity: 0.3; transform: scale(1); filter: brightness(1); }
           50% { opacity: 1; transform: scale(1.3); filter: brightness(1.5); }
         }
+        @keyframes error-shake {
+          0%, 100% { transform: translate(0, 0) rotate(0deg); }
+          10%, 30%, 50%, 70%, 90% { transform: translate(-4px, -4px) rotate(-1deg); }
+          20%, 40%, 60%, 80% { transform: translate(4px, 4px) rotate(1deg); }
+        }
+        @keyframes error-pulse {
+          0%, 100% { transform: scale(1); box-shadow: 0 0 30px rgba(239, 68, 68, 0.5), 0 0 60px rgba(239, 68, 68, 0.3); }
+          50% { transform: scale(1.05); box-shadow: 0 0 50px rgba(239, 68, 68, 0.8), 0 0 100px rgba(239, 68, 68, 0.5); }
+        }
+        @keyframes error-border-pulse {
+          0%, 100% { border-color: rgba(239, 68, 68, 0.5); box-shadow: 0 0 30px rgba(239, 68, 68, 0.6), inset 0 0 30px rgba(239, 68, 68, 0.2); }
+          50% { border-color: rgba(239, 68, 68, 1); box-shadow: 0 0 60px rgba(239, 68, 68, 1), inset 0 0 60px rgba(239, 68, 68, 0.4); }
+        }
+        @keyframes error-glow-text {
+          0%, 100% { opacity: 1; filter: brightness(1) drop-shadow(0 0 8px rgba(239, 68, 68, 0.8)) drop-shadow(0 0 16px rgba(239, 68, 68, 0.6)); }
+          50% { opacity: 1; filter: brightness(1.5) drop-shadow(0 0 16px rgba(239, 68, 68, 1)) drop-shadow(0 0 32px rgba(239, 68, 68, 0.8)); }
+        }
+        @keyframes error-radial-pulse {
+          0%, 100% { opacity: 0.6; transform: scale(1); }
+          50% { opacity: 1; transform: scale(1.2); }
+        }
+        @keyframes error-shimmer {
+          0% { background-position: -200% center; opacity: 0.3; }
+          50% { opacity: 0.6; }
+          100% { background-position: 200% center; opacity: 0.3; }
+        }
         .animate-float-gentle {
           animation: float-gentle 4s ease-in-out infinite;
         }
@@ -176,6 +208,25 @@ export const Hc = () => {
         }
         .animate-star-twinkle {
           animation: star-twinkle 2s ease-in-out infinite;
+        }
+        .animate-error-shake {
+          animation: error-shake 0.5s ease-in-out infinite;
+        }
+        .animate-error-pulse {
+          animation: error-pulse 1.5s ease-in-out infinite;
+        }
+        .animate-error-border-pulse {
+          animation: error-border-pulse 1s ease-in-out infinite;
+        }
+        .animate-error-glow-text {
+          animation: error-glow-text 1s ease-in-out infinite;
+        }
+        .animate-error-radial-pulse {
+          animation: error-radial-pulse 2s ease-in-out infinite;
+        }
+        .animate-error-shimmer {
+          background-size: 200% auto;
+          animation: error-shimmer 3s linear infinite;
         }
       `}</style>
       <div className="h-screen w-screen flex items-center justify-center bg-black relative overflow-hidden">
@@ -249,39 +300,107 @@ export const Hc = () => {
             />
           ))}
         </div>
-        <div className="relative z-10 flex flex-col gap-6 w-80 h-80 items-center justify-center text-center font-mono animate-card-entrance animate-card-float">
-          <div className="absolute inset-0 rounded-[2rem] bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 opacity-60 blur-xl animate-gradient-rotate" />
-          <div className="absolute inset-[3px] rounded-[calc(2rem-3px)] bg-black/80 backdrop-blur-md shadow-2xl border border-white/10 animate-border-pulse" />
-          <div className="absolute inset-[3px] rounded-[calc(2rem-3px)] bg-[radial-gradient(circle_at_center,rgba(139,92,246,0.1)_0%,transparent_70%)] animate-radial-pulse" />
-          <div className="absolute inset-[3px] rounded-[calc(2rem-3px)] bg-gradient-to-r from-transparent via-cyan-500/20 to-transparent animate-shimmer-sweep" />
-          <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-cyan-400 rounded-tl-[2rem] animate-corner-pulse animate-corner-glow" />
+        <div
+          className={`relative z-10 flex flex-col gap-6 w-80 h-80 items-center justify-center text-center font-mono animate-card-entrance ${
+            error
+              ? "animate-error-shake animate-error-pulse"
+              : "animate-card-float"
+          }`}
+        >
           <div
-            className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-purple-400 rounded-tr-[2rem] animate-corner-pulse-delay-1 animate-corner-glow"
-            style={{ animationDelay: "0.5s" }}
+            className={`absolute inset-0 rounded-[2rem] blur-xl ${
+              error
+                ? "bg-gradient-to-r from-red-500 via-red-600 to-red-500 opacity-80"
+                : "bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 opacity-60 animate-gradient-rotate"
+            }`}
           />
           <div
-            className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-pink-400 rounded-bl-[2rem] animate-corner-pulse-delay-2 animate-corner-glow"
-            style={{ animationDelay: "1s" }}
+            className={`absolute inset-[3px] rounded-[calc(2rem-3px)] bg-black/80 backdrop-blur-md shadow-2xl border ${
+              error
+                ? "border-red-500/80 animate-error-border-pulse"
+                : "border-white/10 animate-border-pulse"
+            }`}
           />
           <div
-            className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-cyan-400 rounded-br-[2rem] animate-corner-pulse-delay-3 animate-corner-glow"
-            style={{ animationDelay: "1.5s" }}
+            className={`absolute inset-[3px] rounded-[calc(2rem-3px)] ${
+              error
+                ? "bg-[radial-gradient(circle_at_center,rgba(239,68,68,0.3)_0%,transparent_70%)] animate-error-radial-pulse"
+                : "bg-[radial-gradient(circle_at_center,rgba(139,92,246,0.1)_0%,transparent_70%)] animate-radial-pulse"
+            }`}
           />
+          <div
+            className={`absolute inset-[3px] rounded-[calc(2rem-3px)] bg-gradient-to-r from-transparent ${
+              error
+                ? "via-red-500/40 to-transparent animate-error-shimmer"
+                : "via-cyan-500/20 to-transparent animate-shimmer-sweep"
+            }`}
+          />
+          {error && (
+            <div className="absolute inset-[3px] rounded-[calc(2rem-3px)] overflow-hidden pointer-events-none">
+              <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-red-500 animate-error-glow-text" />
+              <div
+                className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-red-500 animate-error-glow-text"
+                style={{ animationDelay: "0.25s" }}
+              />
+              <div
+                className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-red-500 animate-error-glow-text"
+                style={{ animationDelay: "0.5s" }}
+              />
+              <div
+                className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-red-500 animate-error-glow-text"
+                style={{ animationDelay: "0.75s" }}
+              />
+            </div>
+          )}
+          {!error && (
+            <>
+              <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-cyan-400 rounded-tl-[2rem] animate-corner-pulse animate-corner-glow" />
+              <div
+                className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-purple-400 rounded-tr-[2rem] animate-corner-pulse-delay-1 animate-corner-glow"
+                style={{ animationDelay: "0.5s" }}
+              />
+              <div
+                className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-pink-400 rounded-bl-[2rem] animate-corner-pulse-delay-2 animate-corner-glow"
+                style={{ animationDelay: "1s" }}
+              />
+              <div
+                className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-cyan-400 rounded-br-[2rem] animate-corner-pulse-delay-3 animate-corner-glow"
+                style={{ animationDelay: "1.5s" }}
+              />
+            </>
+          )}
           <div className="relative z-10 flex flex-col gap-6 items-center justify-center w-full h-full px-4 py-4">
-            <div className="text-4xl font-bold bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent animate-text-shimmer drop-shadow-[0_0_8px_rgba(139,92,246,0.5)] animate-title-entrance">
+            <div
+              className={`text-4xl font-bold bg-clip-text text-transparent animate-text-shimmer animate-title-entrance ${
+                error
+                  ? "bg-gradient-to-r from-red-500 via-red-600 to-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.8)]"
+                  : "bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 drop-shadow-[0_0_8px_rgba(139,92,246,0.5)]"
+              }`}
+            >
               {import.meta.env.VITE_TITLE}
             </div>
-            <div className="flex flex-col gap-4 w-full">
-              <div className="text-xs text-cyan-300 font-semibold tracking-wider animate-fade-in drop-shadow-[0_0_4px_rgba(34,211,238,0.5)] animate-pulse-glow-text">
-                {data?.frontendTime}
+            {error ? (
+              <div className="flex flex-col gap-3 items-center">
+                <div className="text-2xl font-bold text-red-500 animate-error-glow-text">
+                  ⚠️ ERROR ⚠️
+                </div>
+                <div className="text-sm text-red-400 font-semibold tracking-wider animate-error-glow-text px-4">
+                  {error}
+                </div>
               </div>
-              <div className="text-xs text-purple-300 font-semibold tracking-wider animate-fade-in-delay-1 drop-shadow-[0_0_4px_rgba(196,181,253,0.5)] animate-pulse-glow-text-delay-1">
-                {data?.backendTime}
+            ) : (
+              <div className="flex flex-col gap-4 w-full">
+                <div className="text-xs text-cyan-300 font-semibold tracking-wider animate-fade-in drop-shadow-[0_0_4px_rgba(34,211,238,0.5)] animate-pulse-glow-text">
+                  {data?.frontendTime}
+                </div>
+                <div className="text-xs text-purple-300 font-semibold tracking-wider animate-fade-in-delay-1 drop-shadow-[0_0_4px_rgba(196,181,253,0.5)] animate-pulse-glow-text-delay-1">
+                  {data?.backendTime}
+                </div>
+                <div className="text-xs text-pink-300 font-semibold tracking-wider animate-fade-in-delay-2 drop-shadow-[0_0_4px_rgba(244,114,182,0.5)] animate-pulse-glow-text-delay-2">
+                  {data?.databaseTime}
+                </div>
               </div>
-              <div className="text-xs text-pink-300 font-semibold tracking-wider animate-fade-in-delay-2 drop-shadow-[0_0_4px_rgba(244,114,182,0.5)] animate-pulse-glow-text-delay-2">
-                {data?.databaseTime}
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
