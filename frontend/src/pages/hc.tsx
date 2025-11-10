@@ -269,7 +269,7 @@ export const Hc = () => {
           />
           <div className="relative z-10 flex flex-col gap-6 items-center justify-center w-full h-full px-4 py-4">
             <div className="text-4xl font-bold bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent animate-text-shimmer drop-shadow-[0_0_8px_rgba(139,92,246,0.5)] animate-title-entrance">
-              CODE MOTO
+              {import.meta.env.VITE_TITLE}
             </div>
             <div className="flex flex-col gap-4 w-full">
               <div className="text-xs text-cyan-300 font-semibold tracking-wider animate-fade-in drop-shadow-[0_0_4px_rgba(34,211,238,0.5)] animate-pulse-glow-text">
