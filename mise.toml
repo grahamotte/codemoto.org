@@ -6,13 +6,13 @@ _.file = '.env'
 #
 
 [tasks."dependencies:backend"]
-run = "cd backend && bundle install"
+run = "cd backend && mkdir -p log && bundle install"
 
 [tasks."dependencies:frontend"]
-run = "cd frontend && bun install"
+run = "cd frontend && mkdir -p log && bun install"
 
 [tasks."dependencies:deploy"]
-run = "cd deploy && bundle install"
+run = "cd deploy && mkdir -p log && bundle install"
 
 [tasks."dependencies:gems"]
 run = "for dir in gems/*/; do (cd \"$dir\" && bundle install); done"
@@ -134,46 +134,46 @@ depends = ["test:*"]
 
 [tasks."deploy"]
 depends = ["dependencies:deploy"]
-run = "set -a && source .env.production && cd deploy && mkdir -p log && ruby deploy.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_deploy.log"
+run = "set -a && source .env.production && cd deploy && ruby deploy.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_deploy.log"
 
 [tasks."deploy:quick"]
 alias = ["quick"]
 depends = ["dependencies:deploy"]
-run = "set -a && source .env.production && cd deploy && mkdir -p log && ruby quick.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_quick.log"
+run = "set -a && source .env.production && cd deploy && ruby quick.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_quick.log"
 
 [tasks."deploy:destroy"]
 depends = ["dependencies:deploy"]
-run = "set -a && source .env.production && cd deploy && mkdir -p log && ruby destroy.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_destroy.log"
+run = "set -a && source .env.production && cd deploy && ruby destroy.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_destroy.log"
 
 [tasks."deploy:log"]
 depends = ["dependencies:deploy"]
-run = "set -a && source .env.production && cd deploy && mkdir -p log && ruby log.rb"
+run = "set -a && source .env.production && cd deploy && ruby log.rb"
 
 [tasks."deploy:ssh"]
 alias = ["ssh"]
 depends = ["dependencies:deploy"]
-run = "set -a && source .env.production && cd deploy && mkdir -p log && ruby ssh.rb"
+run = "set -a && source .env.production && cd deploy && ruby ssh.rb"
 
 [tasks."deploy:htop"]
 depends = ["dependencies:deploy"]
-run = "set -a && source .env.production && cd deploy && mkdir -p log && ruby htop.rb"
+run = "set -a && source .env.production && cd deploy && ruby htop.rb"
 
 [tasks."deploy:backup"]
 depends = ["dependencies:deploy"]
-run = "set -a && source .env.production && cd deploy && mkdir -p log && ruby backup.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_backup.log"
+run = "set -a && source .env.production && cd deploy && ruby backup.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_backup.log"
 
 [tasks."deploy:restore"]
 depends = ["dependencies:deploy"]
-run = "set -a && source .env.production && cd deploy && mkdir -p log && ruby restore.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_restore.log"
+run = "set -a && source .env.production && cd deploy && ruby restore.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_restore.log"
 
 [tasks."deploy:pry"]
 depends = ["dependencies:deploy"]
-run = "set -a && source .env.production && cd deploy && mkdir -p log && ruby pry.rb"
+run = "set -a && source .env.production && cd deploy && ruby pry.rb"
 
 [tasks."deploy:status"]
 alias = ["status"]
 depends = ["dependencies:deploy"]
-run = "set -a && source .env.production && cd deploy && mkdir -p log && ruby status.rb"
+run = "set -a && source .env.production && cd deploy && ruby status.rb"
 
 #
 # Other
