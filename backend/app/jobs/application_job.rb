@@ -10,7 +10,8 @@ class ApplicationJob < ActiveJob::Base
     def schedule_interval = @schedule
   end
 
-  around_perform do |block|
+  around_perform do |job, block|
+    Current._job = job
     Timeout.timeout(TIMEOUT) { block.call }
   end
 end

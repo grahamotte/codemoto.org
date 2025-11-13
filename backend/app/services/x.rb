@@ -16,6 +16,10 @@ class X
       dev
     end
 
+    def host
+      dev? ? "http://localhost:5173" : "https://#{ENV.fetch("DOMAIN")}"
+    end
+
     def wait(min = 0.5, max = 3.0)
       sleep(rand(min.to_f..max.to_f))
       nil
