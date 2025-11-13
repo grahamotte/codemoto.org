@@ -260,6 +260,7 @@ class Path
 
       when :mp3 then "audio/mpeg"
       when :flac then "audio/flac"
+      when :m4a then "audio/mp4"
 
       when :txt, :text then "text/plain"
       when :html, :htm then "text/html"
