@@ -1,13 +1,12 @@
 # frozen_string_literal: true
 
-ENV["test"] = "true"
+ENV['test'] = 'true'
 
-require "bundler/setup"
+require 'bundler/setup'
 Bundler.require(:default)
 
-require "minitest/autorun"
-require "fileutils"
-require "tempfile"
+require 'minitest/autorun'
+require 'fileutils'
+require 'tempfile'
 
-require_relative "../lib/profile"
-
+require_relative '../lib/profile'
