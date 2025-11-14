@@ -4,23 +4,23 @@
 
 inherit_gem: { rubocop-rails-omakase: rubocop.yml }
 
-AllCops:
-  NewCops: enable
+# AllCops:
+#   NewCops: enable
 
-Style:
-  Enabled: true
+# Style:
+#   Enabled: true
 
-Layout:
-  Enabled: true
+# Layout:
+#   Enabled: true
 
-Lint:
-  Enabled: true
+# Lint:
+#   Enabled: true
 
-Security:
-  Enabled: true
+# Security:
+#   Enabled: true
 
-Naming:
-  Enabled: true
+# Naming:
+#   Enabled: true
 
 #
 # Custom Rules
@@ -34,184 +34,183 @@ Style/TrailingCommaInArrayLiteral:
 
 Style/TrailingCommaInHashLiteral:
   EnforcedStyleForMultiline: comma
+# Layout/MultilineMethodCallIndentation:
+#   EnforcedStyle: indented
 
-Layout/MultilineMethodCallIndentation:
-  EnforcedStyle: indented
+# Layout/BlockAlignment:
+#   EnforcedStyleAlignWith: start_of_block
 
-Layout/BlockAlignment:
-  EnforcedStyleAlignWith: start_of_block
+# Layout/IndentationConsistency:
+#   Enabled: true
+#   EnforcedStyle: normal
 
-Layout/IndentationConsistency:
-  Enabled: true
-  EnforcedStyle: normal
+# Layout/IndentationWidth:
+#   Enabled: true
+#   Width: 2
 
-Layout/IndentationWidth:
-  Enabled: true
-  Width: 2
+# Layout/MultilineMethodCallBraceLayout:
+#   EnforcedStyle: new_line
 
-Layout/MultilineMethodCallBraceLayout:
-  EnforcedStyle: new_line
+# Layout/FirstArgumentIndentation:
+#   EnforcedStyle: consistent
 
-Layout/FirstArgumentIndentation:
-  EnforcedStyle: consistent
+# Layout/ArgumentAlignment:
+#   Enabled: true
+#   EnforcedStyle: with_fixed_indentation
 
-Layout/ArgumentAlignment:
-  Enabled: true
-  EnforcedStyle: with_fixed_indentation
+# Layout/FirstMethodArgumentLineBreak:
+#   Enabled: true
 
-Layout/FirstMethodArgumentLineBreak:
-  Enabled: true
+# Lint/AssignmentInCondition:
+#   Enabled: true
+#   AllowSafeAssignment: false
 
-Lint/AssignmentInCondition:
-  Enabled: true
-  AllowSafeAssignment: false
+# Layout/FirstArrayElementLineBreak:
+#   Enabled: true
 
-Layout/FirstArrayElementLineBreak:
-  Enabled: true
+# Layout/FirstHashElementIndentation:
+#   EnforcedStyle: consistent
 
-Layout/FirstHashElementIndentation:
-  EnforcedStyle: consistent
+# Layout/HashAlignment:
+#   EnforcedHashRocketStyle: key
+#   EnforcedColonStyle: key
 
-Layout/HashAlignment:
-  EnforcedHashRocketStyle: key
-  EnforcedColonStyle: key
+# Layout/SpaceInsideArrayLiteralBrackets:
+#   EnforcedStyle: no_space
 
-Layout/SpaceInsideArrayLiteralBrackets:
-  EnforcedStyle: no_space
-
-Style/BlockDelimiters:
-  EnforcedStyle: line_count_based
-  AllowedMethods: []
+# Style/BlockDelimiters:
+#   EnforcedStyle: line_count_based
+#   AllowedMethods: []
 
 #
 # Disabled Rules
 #
 
-Style/Documentation:
-  Enabled: false
+# Style/Documentation:
+#   Enabled: false
 
-Lint/RedundantSafeNavigation:
-  Enabled: false
+# Lint/RedundantSafeNavigation:
+#   Enabled: false
 
-Lint/UnusedBlockArgument:
-  Enabled: false
+# Lint/UnusedBlockArgument:
+#   Enabled: false
 
-Lint/UnusedMethodArgument:
-  Enabled: false
+# Lint/UnusedMethodArgument:
+#   Enabled: false
 
-Lint/NonLocalExitFromIterator:
-  Enabled: false
+# Lint/NonLocalExitFromIterator:
+#   Enabled: false
 
-Lint/UselessConstantScoping:
-  Enabled: false
+# Lint/UselessConstantScoping:
+#   Enabled: false
 
-Lint/DuplicateBranch:
-  Enabled: false
+# Lint/DuplicateBranch:
+#   Enabled: false
 
-Lint/UselessTimes:
-  Enabled: false
+# Lint/UselessTimes:
+#   Enabled: false
 
-Lint/IneffectiveAccessModifier:
-  Enabled: false
+# Lint/IneffectiveAccessModifier:
+#   Enabled: false
 
-Naming/PredicatePrefix:
-  Enabled: false
+# Naming/PredicatePrefix:
+#   Enabled: false
 
-Naming/PredicateMethod:
-  Enabled: false
+# Naming/PredicateMethod:
+#   Enabled: false
 
-Naming/VariableNumber:
-  Enabled: false
+# Naming/VariableNumber:
+#   Enabled: false
 
-Naming/MemoizedInstanceVariableName:
-  Enabled: false
+# Naming/MemoizedInstanceVariableName:
+#   Enabled: false
 
-Naming/MethodParameterName:
-  Enabled: false
+# Naming/MethodParameterName:
+#   Enabled: false
 
-Naming/AccessorMethodName:
-  Enabled: false
+# Naming/AccessorMethodName:
+#   Enabled: false
 
-Layout/LineLength:
-  Enabled: false
+# Layout/LineLength:
+#   Enabled: false
 
-Style/FrozenStringLiteralComment:
-  Enabled: false
+# Style/FrozenStringLiteralComment:
+#   Enabled: false
 
-Style/SingleArgumentDig:
-  Enabled: false
+# Style/SingleArgumentDig:
+#   Enabled: false
 
-Style/IfUnlessModifier:
-  Enabled: false
+# Style/IfUnlessModifier:
+#   Enabled: false
 
-Style/Next:
-  Enabled: false
+# Style/Next:
+#   Enabled: false
 
-Style/MultilineBlockChain:
-  Enabled: false
+# Style/MultilineBlockChain:
+#   Enabled: false
 
-Style/GuardClause:
-  Enabled: false
+# Style/GuardClause:
+#   Enabled: false
 
-Style/ItBlockParameter:
-  Enabled: false
+# Style/ItBlockParameter:
+#   Enabled: false
 
-Style/SafeNavigationChainLength:
-  Enabled: false
+# Style/SafeNavigationChainLength:
+#   Enabled: false
 
-Style/NestedTernaryOperator:
-  Enabled: false
+# Style/NestedTernaryOperator:
+#   Enabled: false
 
-Style/CollectionQuerying:
-  Enabled: false
+# Style/CollectionQuerying:
+#   Enabled: false
 
-Style/SymbolProc:
-  Enabled: false
+# Style/SymbolProc:
+#   Enabled: false
 
-Style/NumericPredicate:
-  Enabled: false
+# Style/NumericPredicate:
+#   Enabled: false
 
-Style/HashLikeCase:
-  Enabled: false
+# Style/HashLikeCase:
+#   Enabled: false
 
-Style/HashEachMethods:
-  Enabled: false
+# Style/HashEachMethods:
+#   Enabled: false
 
-Style/IdenticalConditionalBranches:
-  Enabled: false
+# Style/IdenticalConditionalBranches:
+#   Enabled: false
 
-Style/RedundantSort:
-  Enabled: false
+# Style/RedundantSort:
+#   Enabled: false
 
-Style/EmptyElse:
-  Enabled: false
+# Style/EmptyElse:
+#   Enabled: false
 
-Style/CombinableLoops:
-  Enabled: false
+# Style/CombinableLoops:
+#   Enabled: false
 
-Style/InverseMethods:
-  Enabled: false
+# Style/InverseMethods:
+#   Enabled: false
 
-Style/RedundantFilterChain:
-  Enabled: false
+# Style/RedundantFilterChain:
+#   Enabled: false
 
-Style/FloatDivision:
-  Enabled: false
+# Style/FloatDivision:
+#   Enabled: false
 
-Style/MapToSet:
-  Enabled: false
+# Style/MapToSet:
+#   Enabled: false
 
-Style/ClassVars:
-  Enabled: false
+# Style/ClassVars:
+#   Enabled: false
 
-Style/RaiseArgs:
-  Enabled: false
+# Style/RaiseArgs:
+#   Enabled: false
 
-Style/SafeNavigation:
-  Enabled: false
+# Style/SafeNavigation:
+#   Enabled: false
 
-Style/RedundantArgument:
-  Enabled: false
+# Style/RedundantArgument:
+#   Enabled: false
 
-Style/StringConcatenation:
-  Enabled: false
+# Style/StringConcatenation:
+#   Enabled: false
