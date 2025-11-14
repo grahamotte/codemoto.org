@@ -16,6 +16,14 @@ class X
       dev
     end
 
+    def test
+      Rails.env.test?
+    end
+
+    def test?
+      test
+    end
+
     def host
       dev? ? "http://localhost:5173" : "https://#{ENV.fetch("DOMAIN")}"
     end
