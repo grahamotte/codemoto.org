@@ -24,9 +24,19 @@ class DbBackupJob < ApplicationJob
     cmd("/usr/bin/pg_dump -U #{deploy_user} --clean #{db_name} > #{path}")
     cmd("#{exports} aws --endpoint-url #{endpoint} s3 cp #{path} s3://#{bucket}/#{key}")
     cmd("rm -f #{path}")
-  end
 
-  private
+    keep_backups_for = 60.days
+    all_backups = cmd("#{exports} aws --endpoint-url #{endpoint} s3 ls s3://#{bucket}/#{db_name}_")
+      .split("\n")
+      .map { |x| x.split.last }
+      .select { |x| x.start_with?("#{db_name}_") && x.end_with?(".sql") }
+    outdated_backups = all_backups
+      .select { |x| x.partition('.').first.rpartition('_').last.to_i < keep_backups_for.ago.to_i }
+
+    outdated_backups.each do |backup|
+      cmd("#{exports} aws --endpoint-url #{endpoint} s3 rm s3://#{bucket}/#{backup}")
+    end
+  end
 
   def cmd(command)
     puts command unless X.test?
