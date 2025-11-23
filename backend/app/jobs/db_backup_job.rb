@@ -31,7 +31,7 @@ class DbBackupJob < ApplicationJob
       .map { |x| x.split.last }
       .select { |x| x.start_with?("#{db_name}_") && x.end_with?(".sql") }
     outdated_backups = all_backups
-      .select { |x| x.partition('.').first.rpartition('_').last.to_i < keep_backups_for.ago.to_i }
+      .select { |x| x.rpartition('_').last.gsub(".sql", "").to_i < keep_backups_for.ago.to_i }
 
     outdated_backups.each do |backup|
       cmd("#{exports} aws --endpoint-url #{endpoint} s3 rm s3://#{bucket}/#{backup}")

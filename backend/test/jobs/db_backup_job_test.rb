@@ -25,34 +25,38 @@ class DbBackupJobTest < ActiveSupport::TestCase
     job.expects(:cmd).with("/usr/bin/pg_dump -U deploy --clean test_db > /home/deploy/test_db_1234567890.sql").returns("")
     job.expects(:cmd).with("export AWS_ACCESS_KEY_ID=test_access_key; export AWS_SECRET_ACCESS_KEY=test_secret_key; export AWS_REQUEST_CHECKSUM_CALCULATION=WHEN_REQUIRED; export AWS_RESPONSE_CHECKSUM_VALIDATION=WHEN_REQUIRED; aws --endpoint-url https://s3.example.com s3 cp /home/deploy/test_db_1234567890.sql s3://test-bucket/test_db_1234567890.sql").returns("")
     job.expects(:cmd).with("rm -f /home/deploy/test_db_1234567890.sql").returns("")
-    job.expects(:cmd).with("export AWS_ACCESS_KEY_ID=test_access_key; export AWS_SECRET_ACCESS_KEY=test_secret_key; export AWS_REQUEST_CHECKSUM_CALCULATION=WHEN_REQUIRED; export AWS_RESPONSE_CHECKSUM_VALIDATION=WHEN_REQUIRED; aws --endpoint-url https://s3.example.com s3 ls s3://test-bucket/").returns("")
+    job.expects(:cmd).with("export AWS_ACCESS_KEY_ID=test_access_key; export AWS_SECRET_ACCESS_KEY=test_secret_key; export AWS_REQUEST_CHECKSUM_CALCULATION=WHEN_REQUIRED; export AWS_RESPONSE_CHECKSUM_VALIDATION=WHEN_REQUIRED; aws --endpoint-url https://s3.example.com s3 ls s3://test-bucket/test_db_").returns("")
     job.perform
   end
 
   def test_perform_removes_old_backups
     job = DbBackupJob.new
+    exports = "export AWS_ACCESS_KEY_ID=test_access_key; export AWS_SECRET_ACCESS_KEY=test_secret_key; export AWS_REQUEST_CHECKSUM_CALCULATION=WHEN_REQUIRED; export AWS_RESPONSE_CHECKSUM_VALIDATION=WHEN_REQUIRED;"
 
-    # Stub backup commands
-    job.stubs(:cmd).with(regexp_matches(/pg_dump/)).returns("")
-    job.stubs(:cmd).with(regexp_matches(/s3 cp/)).returns("")
-    job.stubs(:cmd).with(regexp_matches(/rm -f(?!.*s3)/)).returns("") # rm -f local file
+    # Standard backup flow expectations
+    job.expects(:cmd).with("/usr/bin/pg_dump -U deploy --clean test_db > /home/deploy/test_db_1234567890.sql").returns("")
+    job.expects(:cmd).with("#{exports} aws --endpoint-url https://s3.example.com s3 cp /home/deploy/test_db_1234567890.sql s3://test-bucket/test_db_1234567890.sql").returns("")
+    job.expects(:cmd).with("rm -f /home/deploy/test_db_1234567890.sql").returns("")
 
-    old_time = 61.days.ago
-    new_time = 59.days.ago
+    old_ts = 61.days.ago.to_i
+    new_ts = 59.days.ago.to_i
+
+    old_file = "test_db_#{old_ts}.sql"
+    new_file = "test_db_#{new_ts}.sql"
+
     ls_output = <<~OUTPUT
-      #{old_time.strftime('%Y-%m-%d %H:%M:%S')} 1234 old_backup.sql
-      #{new_time.strftime('%Y-%m-%d %H:%M:%S')} 1234 new_backup.sql
-      PRE folder/
+      2023-01-01 12:00:00 1234 #{old_file}
+      2023-01-02 12:00:00 1234 #{new_file}
     OUTPUT
 
     # Expect ls command
-    job.expects(:cmd).with(regexp_matches(/s3 ls/)).returns(ls_output)
+    job.expects(:cmd).with("#{exports} aws --endpoint-url https://s3.example.com s3 ls s3://test-bucket/test_db_").returns(ls_output)
 
     # Expect removal of old backup
-    job.expects(:cmd).with(regexp_matches(/s3 rm .*old_backup.sql/)).returns("")
+    job.expects(:cmd).with("#{exports} aws --endpoint-url https://s3.example.com s3 rm s3://test-bucket/#{old_file}").returns("")
 
     # Should not remove new backup
-    job.expects(:cmd).with(regexp_matches(/s3 rm .*new_backup.sql/)).never
+    job.expects(:cmd).with("#{exports} aws --endpoint-url https://s3.example.com s3 rm s3://test-bucket/#{new_file}").never
 
     job.perform
   end
