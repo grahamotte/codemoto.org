@@ -141,6 +141,11 @@ alias = ["quick"]
 depends = ["dependencies:deploy"]
 run = "set -a && source .env.production && cd deploy && ruby quick.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_quick.log"
 
+[tasks."deploy:push"]
+alias = ["push"]
+depends = ["dependencies:deploy"]
+run = "set -a && source .env.production && cd deploy && ruby push.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_push.log"
+
 [tasks."deploy:destroy"]
 depends = ["dependencies:deploy"]
 run = "set -a && source .env.production && cd deploy && ruby destroy.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_destroy.log"
@@ -190,7 +195,7 @@ run = "bash scripts/ruby_profile.sh \"$usage_file\""
 run = [
   "if [ -n \"$(git status --porcelain)\" ]; then echo 'Error: You have unstaged changes. Please commit or stash them before rebasing.'; exit 1; fi",
   "git remote remove upstream || true",
-  "git remote add upstream git@github.com:grahamotte/codemoto.org.git",
+  "git remote add upstream ssh://git@codeberg.org/grahamotte/codemoto.org.git",
   "git fetch upstream",
   "git checkout master",
   "git rebase upstream/master",
