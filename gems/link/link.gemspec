@@ -10,6 +10,7 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "addressable"
   spec.add_dependency "path"
+  spec.add_dependency "uri"
 
   spec.add_development_dependency "minitest"
   spec.add_development_dependency "rubocop"

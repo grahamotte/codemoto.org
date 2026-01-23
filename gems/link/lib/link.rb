@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "addressable"
+require "uri"
 
 class Link
   class << self
@@ -91,6 +92,10 @@ class Link
 
     def likely_media?(url)
       Path.media?(path(url))
+    end
+
+    def extract(string)
+      URI.extract(string, %w[http https]).map { |u| u.gsub(/[),.]+$/, "") }
     end
 
     private

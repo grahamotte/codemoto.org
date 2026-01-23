@@ -219,4 +219,50 @@ class LinkTest < Minitest::Test
   def test_clean_preserves_port_if_present
     assert_equal "https://example.com:8080/path", Link.clean("https://example.com:8080/path")
   end
+
+  def test_extract_finds_http_urls
+    result = Link.extract("Check out http://example.com for more info")
+    assert_equal [ "http://example.com" ], result
+  end
+
+  def test_extract_finds_https_urls
+    result = Link.extract("Check out https://example.com for more info")
+    assert_equal [ "https://example.com" ], result
+  end
+
+  def test_extract_finds_multiple_urls
+    result = Link.extract("Visit https://foo.com and http://bar.com")
+    assert_equal [ "https://foo.com", "http://bar.com" ], result
+  end
+
+  def test_extract_strips_trailing_punctuation
+    result = Link.extract("See https://example.com.")
+    assert_equal [ "https://example.com" ], result
+
+    result = Link.extract("See https://example.com,")
+    assert_equal [ "https://example.com" ], result
+
+    result = Link.extract("(https://example.com)")
+    assert_equal [ "https://example.com" ], result
+  end
+
+  def test_extract_strips_multiple_trailing_punctuation
+    result = Link.extract("See https://example.com...).")
+    assert_equal [ "https://example.com" ], result
+  end
+
+  def test_extract_returns_empty_array_when_no_urls
+    result = Link.extract("No urls here")
+    assert_equal [], result
+  end
+
+  def test_extract_ignores_ftp_urls
+    result = Link.extract("ftp://files.example.com")
+    assert_equal [], result
+  end
+
+  def test_extract_preserves_paths_and_query_strings
+    result = Link.extract("Go to https://example.com/path?foo=bar for details")
+    assert_equal [ "https://example.com/path?foo=bar" ], result
+  end
 end

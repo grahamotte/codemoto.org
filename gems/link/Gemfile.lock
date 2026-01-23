@@ -9,6 +9,7 @@ PATH
     link (0.0.0)
       addressable
       path
+      uri
 
 GEM
   remote: https://rubygems.org/
