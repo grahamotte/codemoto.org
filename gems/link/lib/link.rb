@@ -66,6 +66,7 @@ class Link
       path = path.gsub(%r{/+}, "/")
       path = Addressable::URI.unencode(path)
       query = blank?(query) ? nil : "?#{query.chomp('&')}"
+      path = "" if path == "/" && !blank?(query)
       result = "https://#{host}#{port_str}#{path}#{query}"
       result = result[..-2] if result.end_with?("/") && path == "/" && blank?(query)
       result

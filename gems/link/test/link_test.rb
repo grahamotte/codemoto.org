@@ -220,6 +220,14 @@ class LinkTest < Minitest::Test
     assert_equal "https://example.com:8080/path", Link.clean("https://example.com:8080/path")
   end
 
+  def test_clean_preserves_port_and_removes_www
+    assert_equal "https://example.com:8080/foo", Link.clean("https://www.example.com:8080/foo/")
+  end
+
+  def test_clean_removes_trailing_slash_before_query_on_root
+    assert_equal "https://example.com?x=1", Link.clean("https://www.example.com/?x=1")
+  end
+
   def test_extract_finds_http_urls
     result = Link.extract("Check out http://example.com for more info")
     assert_equal [ "http://example.com" ], result
