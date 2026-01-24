@@ -219,5 +219,8 @@ Style/RedundantArgument:
 Style/StringConcatenation:
   Enabled: false
 
+Minitest/MultipleAssertions:
+  Enabled: false
+
 Minitest/TestMethodName:
   Enabled: true

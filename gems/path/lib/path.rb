@@ -52,7 +52,7 @@ class Path
       [
         x.to_s,
         size(x).to_s,
-        mtime(x).iso8601
+        mtime(x).iso8601,
       ].join("|").then { |x| Digest::SHA256.hexdigest(x) }
     end
 

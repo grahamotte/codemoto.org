@@ -19,6 +19,7 @@ class PathTest < Minitest::Test
   def test_dir_returns_true_for_directory
     dir_path = File.join(@temp_dir, "test_dir")
     FileUtils.mkdir_p(dir_path)
+
     assert Path.dir?(dir_path)
   end
 
@@ -28,17 +29,20 @@ class PathTest < Minitest::Test
 
   def test_dir_returns_false_for_file
     file_path = create_temp_file("content")
+
     refute Path.dir?(file_path)
   end
 
   def test_file_returns_true_for_file
     file_path = create_temp_file("content")
+
     assert Path.file?(file_path)
   end
 
   def test_file_returns_false_for_directory
     dir_path = File.join(@temp_dir, "test_dir")
     FileUtils.mkdir_p(dir_path)
+
     refute Path.file?(dir_path)
   end
 
@@ -48,6 +52,7 @@ class PathTest < Minitest::Test
 
   def test_exists_returns_true_for_existing_file
     file_path = create_temp_file("content")
+
     assert Path.exists?(file_path)
   end
 
@@ -57,6 +62,7 @@ class PathTest < Minitest::Test
 
   def test_exist_is_alias_for_exists
     file_path = create_temp_file("content")
+
     assert Path.exist?(file_path)
     refute Path.exist?(File.join(@temp_dir, "nonexistent"))
   end
@@ -67,12 +73,14 @@ class PathTest < Minitest::Test
 
   def test_does_not_exist_returns_false_for_existing_file
     file_path = create_temp_file("content")
+
     refute Path.does_not_exist?(file_path)
   end
 
   def test_empty_dir_returns_true_for_empty_directory
     dir_path = File.join(@temp_dir, "empty_dir")
     FileUtils.mkdir_p(dir_path)
+
     assert Path.empty_dir?(dir_path)
   end
 
@@ -80,18 +88,21 @@ class PathTest < Minitest::Test
     dir_path = File.join(@temp_dir, "nonempty_dir")
     FileUtils.mkdir_p(dir_path)
     File.write(File.join(dir_path, "file.txt"), "content")
+
     refute Path.empty_dir?(dir_path)
   end
 
   def test_mkdir_creates_directory
     dir_path = File.join(@temp_dir, "new_dir")
     Path.mkdir(dir_path)
+
     assert Dir.exist?(dir_path)
   end
 
   def test_mkdir_creates_nested_directories
     dir_path = File.join(@temp_dir, "parent/child/grandchild")
     Path.mkdir(dir_path)
+
     assert Dir.exist?(dir_path)
   end
 
@@ -99,23 +110,27 @@ class PathTest < Minitest::Test
     dir_path = File.join(@temp_dir, "existing_dir")
     FileUtils.mkdir_p(dir_path)
     Path.mkdir(dir_path)
+
     assert Dir.exist?(dir_path)
   end
 
   def test_mtime_returns_modification_time
     file_path = create_temp_file("content")
     mtime = Path.mtime(file_path)
+
     assert_instance_of Time, mtime
   end
 
   def test_size_returns_file_size
     file_path = create_temp_file("hello world")
+
     assert_equal 11, Path.size(file_path)
   end
 
   def test_md5_returns_md5_hash
     file_path = create_temp_file("content")
     md5 = Path.md5(file_path)
+
     assert_match(/^[a-f0-9]{32}$/, md5)
   end
 
@@ -123,6 +138,7 @@ class PathTest < Minitest::Test
     file_path = create_temp_file("content")
     hash1 = Path.quick_hash(file_path)
     hash2 = Path.quick_hash(file_path)
+
     assert_equal hash1, hash2
   end
 
@@ -131,6 +147,7 @@ class PathTest < Minitest::Test
     hash1 = Path.quick_hash(file_path)
     File.write(file_path, "different content with different size")
     hash2 = Path.quick_hash(file_path)
+
     refute_equal hash1, hash2
   end
 
@@ -207,28 +224,33 @@ class PathTest < Minitest::Test
 
   def test_join_joins_paths
     result = Path.join("path", "to", "file.txt")
-    assert result.include?("path/to/file.txt")
+
+    assert_includes result, "path/to/file.txt"
   end
 
   def test_join_expands_paths
     result = Path.join("~", "file.txt")
+
     assert result.start_with?(ENV["HOME"])
   end
 
   def test_join_handles_nil_and_empty_values
     result = Path.join("path", nil, "", "file.txt")
-    assert result.include?("path/file.txt")
+
+    assert_includes result, "path/file.txt"
   end
 
   def test_join_handles_absolute_path_in_middle
     result = Path.join("base", "/absolute", "file.txt")
-    assert result.include?("absolute/file.txt")
+
+    assert_includes result, "absolute/file.txt"
   end
 
   def test_join_with_multiple_slashes
     result = Path.join("path//to///file")
+
     assert result.end_with?("path/to/file")
-    refute result.include?("//")
+    refute_includes result, "//"
   end
 
   def test_slash_compact_removes_double_slashes
@@ -280,6 +302,7 @@ class PathTest < Minitest::Test
     FileUtils.mkdir_p(File.join(dir_path, "subdir"))
 
     results = Path.ls(dir_path)
+
     assert_equal 3, results.length
   end
 
@@ -290,7 +313,8 @@ class PathTest < Minitest::Test
     File.write(File.join(dir_path, "subdir/file2.txt"), "content")
 
     results = Path.list(dir_path)
-    assert results.length >= 2
+
+    assert_operator results.length, :>=, 2
   end
 
   def test_list_files_returns_only_files
@@ -300,6 +324,7 @@ class PathTest < Minitest::Test
     File.write(File.join(dir_path, "subdir/file2.txt"), "content")
 
     results = Path.list_files(dir_path)
+
     assert results.all? { |f| Path.file?(f) }
   end
 
@@ -310,13 +335,15 @@ class PathTest < Minitest::Test
     File.write(File.join(dir_path, "file.txt"), "content")
 
     results = Path.list_dirs(dir_path)
+
     assert results.all? { |d| Path.dir?(d) }
   end
 
   def test_touch_creates_file
     file_path = File.join(@temp_dir, "touched.txt")
     Path.touch(file_path)
-    assert File.exist?(file_path)
+
+    assert_path_exists file_path
   end
 
   def test_touch_updates_mtime_on_existing_file
@@ -325,26 +352,30 @@ class PathTest < Minitest::Test
     original_stat = File.stat(file_path)
     Path.touch(file_path)
     new_stat = File.stat(file_path)
-    assert new_stat.mtime >= original_mtime
-    assert File.exist?(file_path)
+
+    assert_operator new_stat.mtime, :>=, original_mtime
+    assert_path_exists file_path
   end
 
   def test_write_creates_file_with_content
     file_path = File.join(@temp_dir, "written.txt")
     Path.write("test content", file_path)
+
     assert_equal "test content", File.read(file_path)
   end
 
   def test_write_creates_parent_directories
     file_path = File.join(@temp_dir, "parent/child/file.txt")
     Path.write("content", file_path)
-    assert File.exist?(file_path)
+
+    assert_path_exists file_path
   end
 
   def test_binwrite_writes_binary_data
     file_path = File.join(@temp_dir, "binary.dat")
     data = [ 0x00, 0xFF, 0xAA ].pack("C*")
     Path.binwrite(data, file_path)
+
     assert_equal data, File.binread(file_path)
   end
 
@@ -352,7 +383,8 @@ class PathTest < Minitest::Test
     file_path = File.join(@temp_dir, "parent/child/binary.dat")
     data = [ 0x00, 0xFF ].pack("C*")
     Path.binwrite(data, file_path)
-    assert File.exist?(file_path)
+
+    assert_path_exists file_path
     assert_equal data, File.binread(file_path)
   end
 
@@ -360,11 +392,13 @@ class PathTest < Minitest::Test
     file_path = create_temp_file("content")
     Path.chmod(file_path, 0o644)
     stat = File.stat(file_path)
+
     assert_equal 0o644, stat.mode & 0o777
   end
 
   def test_read_reads_file_content
     file_path = create_temp_file("test content")
+
     assert_equal "test content", Path.read(file_path)
   end
 
@@ -372,12 +406,14 @@ class PathTest < Minitest::Test
     file_path = File.join(@temp_dir, "binary.dat")
     data = [ 0x00, 0xFF, 0xAA ].pack("C*")
     File.binwrite(file_path, data)
+
     assert_equal data, Path.binread(file_path)
   end
 
   def test_read64_returns_base64_encoded_content
     file_path = create_temp_file("test content")
     base64 = Path.read64(file_path)
+
     assert_equal Base64.strict_encode64("test content"), base64
   end
 
@@ -385,6 +421,7 @@ class PathTest < Minitest::Test
     file_path = File.join(@temp_dir, "data.json")
     File.write(file_path, JSON.generate({ key: "value" }))
     result = Path.read_json(file_path)
+
     assert_equal "value", result[:key]
   end
 
@@ -392,29 +429,33 @@ class PathTest < Minitest::Test
     source = create_temp_file("content")
     dest = File.join(@temp_dir, "moved.txt")
     Path.mv(source, dest)
-    assert File.exist?(dest)
-    refute File.exist?(source)
+
+    assert_path_exists dest
+    refute_path_exists source
   end
 
   def test_mv_creates_parent_directories
     source = create_temp_file("content")
     dest = File.join(@temp_dir, "parent/child/moved.txt")
     Path.mv(source, dest)
-    assert File.exist?(dest)
+
+    assert_path_exists dest
   end
 
   def test_mv_does_nothing_if_source_equals_dest
     file = create_temp_file("content")
     Path.mv(file, file)
-    assert File.exist?(file)
+
+    assert_path_exists file
   end
 
   def test_cp_copies_file
     source = create_temp_file("content")
     dest = File.join(@temp_dir, "copied.txt")
     Path.cp(source, dest)
-    assert File.exist?(dest)
-    assert File.exist?(source)
+
+    assert_path_exists dest
+    assert_path_exists source
     assert_equal "content", File.read(dest)
   end
 
@@ -422,25 +463,29 @@ class PathTest < Minitest::Test
     source = create_temp_file("content")
     dest = File.join(@temp_dir, "parent/child/copied.txt")
     Path.cp(source, dest)
-    assert File.exist?(dest)
+
+    assert_path_exists dest
   end
 
   def test_cp_does_nothing_if_source_equals_dest
     file = create_temp_file("content")
     Path.cp(file, file)
-    assert File.exist?(file)
+
+    assert_path_exists file
   end
 
   def test_rm_removes_file
     file = create_temp_file("content")
     Path.rm(file)
-    refute File.exist?(file)
+
+    refute_path_exists file
   end
 
   def test_rm_removes_directory
     dir = File.join(@temp_dir, "remove_me")
     FileUtils.mkdir_p(dir)
     Path.rm(dir)
+
     refute Dir.exist?(dir)
   end
 
@@ -465,9 +510,11 @@ class PathTest < Minitest::Test
     created_dir = nil
     Path.with_tmp_dir do |dir|
       created_dir = dir
+
       assert Dir.exist?(dir)
       File.write(File.join(dir, "test.txt"), "content")
     end
+
     refute Dir.exist?(created_dir)
   end
 
@@ -480,6 +527,7 @@ class PathTest < Minitest::Test
       end
     rescue
     end
+
     refute Dir.exist?(created_dir)
   end
 
@@ -495,9 +543,11 @@ class PathTest < Minitest::Test
     FileUtils.mkdir_p(custom_path)
     Path.with_tmp_dir(custom_path) do |dir|
       assert_equal custom_path, dir
+
       assert Dir.exist?(dir)
       File.write(File.join(dir, "test.txt"), "content")
     end
+
     refute Dir.exist?(custom_path)
   end
 
@@ -510,25 +560,28 @@ class PathTest < Minitest::Test
     paths = [
       "/path/to/file1.txt",
       "/path/to/file2.txt",
-      "/path/other/file3.txt"
+      "/path/other/file3.txt",
     ]
     result = Path.uniq_dirs(paths)
-    assert result.include?("/path")
-    assert result.include?("/path/to")
-    assert result.include?("/path/other")
+
+    assert_includes result, "/path"
+    assert_includes result, "/path/to"
+    assert_includes result, "/path/other"
   end
 
   def test_uniq_dirs_handles_nil_and_empty_values
     paths = [ "/path/to/file.txt", nil, "", "/other/file.txt" ]
     result = Path.uniq_dirs(paths)
-    assert result.include?("/path")
-    assert result.include?("/other")
+
+    assert_includes result, "/path"
+    assert_includes result, "/other"
   end
 
   def test_uniq_dirs_handles_single_string
     result = Path.uniq_dirs("/path/to/file.txt")
-    assert result.include?("/path")
-    assert result.include?("/path/to")
+
+    assert_includes result, "/path"
+    assert_includes result, "/path/to"
   end
 
   def test_mime_type_returns_correct_type_for_images
@@ -555,6 +608,7 @@ class PathTest < Minitest::Test
   def test_mime_type_returns_directory_for_directories
     dir = File.join(@temp_dir, "dir_test")
     FileUtils.mkdir_p(dir)
+
     assert_equal "inode/directory", Path.mime_type(dir)
   end
 
@@ -601,6 +655,7 @@ class PathTest < Minitest::Test
   def test_media_type_returns_folder_for_directories
     dir = File.join(@temp_dir, "dir_test")
     FileUtils.mkdir_p(dir)
+
     assert_equal :folder, Path.media_type(dir)
   end
 
@@ -645,21 +700,24 @@ class PathTest < Minitest::Test
 
   def test_join_filters_blank_strings
     result = Path.join("path", "", "to", "file")
+
     assert result.end_with?("path/to/file")
   end
 
   def test_join_does_not_filter_whitespace_only_strings
     result = Path.join("path", "   ", "to", "file")
-    assert result.include?("path")
-    assert result.include?("to")
-    assert result.include?("file")
+
+    assert_includes result, "path"
+    assert_includes result, "to"
+    assert_includes result, "file"
   end
 
   def test_join_does_not_filter_strings_with_newlines
     result = Path.join("path", "   \n ", "to", "file")
-    assert result.include?("path")
-    assert result.include?("to")
-    assert result.include?("file")
+
+    assert_includes result, "path"
+    assert_includes result, "to"
+    assert_includes result, "file"
   end
 
   def test_rm_handles_empty_string
@@ -670,23 +728,26 @@ class PathTest < Minitest::Test
   def test_uniq_dirs_filters_empty_strings
     paths = [ "/path/to/file1.txt", "", "/other/file2.txt" ]
     result = Path.uniq_dirs(paths)
-    assert result.include?("/path")
-    assert result.include?("/other")
+
+    assert_includes result, "/path"
+    assert_includes result, "/other"
     assert_equal result.uniq.length, result.length
   end
 
   def test_uniq_dirs_does_not_filter_whitespace_strings
     paths = [ "/path/to/file1.txt", "   ", "/other/file2.txt" ]
     result = Path.uniq_dirs(paths)
-    assert result.include?("/path")
-    assert result.include?("/other")
+
+    assert_includes result, "/path"
+    assert_includes result, "/other"
   end
 
   def test_uniq_dirs_does_not_filter_strings_with_newlines
     paths = [ "/path/to/file1.txt", "   \n ", "/other/file2.txt" ]
     result = Path.uniq_dirs(paths)
-    assert result.include?("/path")
-    assert result.include?("/other")
+
+    assert_includes result, "/path"
+    assert_includes result, "/other"
   end
 
   def test_title_name_with_empty_string
@@ -695,7 +756,8 @@ class PathTest < Minitest::Test
 
   def test_title_name_with_whitespace_only
     result = Path.title_name("   ")
-    assert result.is_a?(String)
+
+    assert_kind_of String, result
   end
 
   def test_extension_with_empty_string

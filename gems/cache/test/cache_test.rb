@@ -122,7 +122,7 @@ class CacheTest < Minitest::Test
     @cache.set("key2", "value2")
     @cache.set("key3", "value3")
 
-    refute Dir.glob(File.join(@cache.dir, "*.json")).empty?
+    refute_empty Dir.glob(File.join(@cache.dir, "*.json"))
 
     @cache.clear
 
@@ -376,6 +376,7 @@ class CacheTest < Minitest::Test
       $root_dir = nil
 
       expected = File.expand_path(File.dirname($PROGRAM_NAME))
+
       assert_equal expected, Cache.default_root_dir
     ensure
       $root_dir = original_root

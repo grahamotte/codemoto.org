@@ -43,23 +43,26 @@ class LinkTest < Minitest::Test
 
   def test_path_parts_splits_path_into_array
     assert_equal [ "path", "to", "resource" ], Link.path_parts("https://example.com/path/to/resource")
-    assert_equal [], Link.path_parts("https://example.com")
+    assert_empty Link.path_parts("https://example.com")
     assert_equal [ "page" ], Link.path_parts("https://example.com/page")
   end
 
   def test_query_extracts_query_parameters
     result = Link.query("https://example.com?foo=bar&baz=qux")
+
     assert_equal "bar", result[:foo]
     assert_equal "qux", result[:baz]
   end
 
   def test_query_returns_empty_hash_for_no_query
     result = Link.query("https://example.com")
-    assert_equal({}, result)
+
+    assert_empty(result)
   end
 
   def test_query_symbolizes_keys
     result = Link.query("https://example.com?foo=bar")
+
     assert result.key?(:foo)
     refute result.key?("foo")
   end
@@ -174,6 +177,7 @@ class LinkTest < Minitest::Test
   def test_clean_handles_complex_urls
     url = "https://www.example.com//path///to//resource/?foo=bar&baz=qux&"
     cleaned = Link.clean(url)
+
     assert_equal "https://example.com/path/to/resource?foo=bar&baz=qux", cleaned
   end
 
@@ -213,7 +217,7 @@ class LinkTest < Minitest::Test
   end
 
   def test_path_parts_handles_empty_path
-    assert_equal [], Link.path_parts("https://example.com/")
+    assert_empty Link.path_parts("https://example.com/")
   end
 
   def test_clean_preserves_port_if_present
@@ -230,47 +234,57 @@ class LinkTest < Minitest::Test
 
   def test_extract_finds_http_urls
     result = Link.extract("Check out http://example.com for more info")
+
     assert_equal [ "http://example.com" ], result
   end
 
   def test_extract_finds_https_urls
     result = Link.extract("Check out https://example.com for more info")
+
     assert_equal [ "https://example.com" ], result
   end
 
   def test_extract_finds_multiple_urls
     result = Link.extract("Visit https://foo.com and http://bar.com")
+
     assert_equal [ "https://foo.com", "http://bar.com" ], result
   end
 
   def test_extract_strips_trailing_punctuation
     result = Link.extract("See https://example.com.")
+
     assert_equal [ "https://example.com" ], result
 
     result = Link.extract("See https://example.com,")
+
     assert_equal [ "https://example.com" ], result
 
     result = Link.extract("(https://example.com)")
+
     assert_equal [ "https://example.com" ], result
   end
 
   def test_extract_strips_multiple_trailing_punctuation
     result = Link.extract("See https://example.com...).")
+
     assert_equal [ "https://example.com" ], result
   end
 
   def test_extract_returns_empty_array_when_no_urls
     result = Link.extract("No urls here")
-    assert_equal [], result
+
+    assert_empty(result)
   end
 
   def test_extract_ignores_ftp_urls
     result = Link.extract("ftp://files.example.com")
-    assert_equal [], result
+
+    assert_empty(result)
   end
 
   def test_extract_preserves_paths_and_query_strings
     result = Link.extract("Go to https://example.com/path?foo=bar for details")
+
     assert_equal [ "https://example.com/path?foo=bar" ], result
   end
 end
