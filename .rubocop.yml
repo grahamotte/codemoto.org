@@ -4,6 +4,9 @@
 
 inherit_gem: { rubocop-rails-omakase: rubocop.yml }
 
+plugins:
+  - rubocop-minitest
+
 AllCops:
   NewCops: enable
 
@@ -34,6 +37,7 @@ Style/TrailingCommaInArrayLiteral:
 
 Style/TrailingCommaInHashLiteral:
   EnforcedStyleForMultiline: comma
+
 # Layout/MultilineMethodCallIndentation:
 #   EnforcedStyle: indented
 
@@ -214,3 +218,6 @@ Style/RedundantArgument:
 
 Style/StringConcatenation:
   Enabled: false
+
+Minitest/TestMethodName:
+  Enabled: true

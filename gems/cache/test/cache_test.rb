@@ -31,8 +31,10 @@ class CacheTest < Minitest::Test
 
     assert_equal "test_value", @cache.get("test_key")
     group_file = Dir.glob(File.join(@cache.dir, "*.json")).first
-    assert File.exist?(group_file)
+
+    assert_path_exists group_file
     content = JSON.parse(File.read(group_file))
+
     assert_equal "test_value", content["test_key"]
   end
 
@@ -43,10 +45,12 @@ class CacheTest < Minitest::Test
     @cache.set("key2", "value2")
 
     json_files = Dir.glob(File.join(@cache.dir, "*.json"))
-    assert json_files.length >= 1
+
+    assert_operator json_files.length, :>=, 1
     json_files.each do |file|
       content = JSON.parse(File.read(file))
-      assert content.is_a?(Hash)
+
+      assert_kind_of Hash, content
     end
   end
 
@@ -117,7 +121,8 @@ class CacheTest < Minitest::Test
     @cache.set("key1", "value1")
     @cache.set("key2", "value2")
     @cache.set("key3", "value3")
-    assert !Dir.glob(File.join(@cache.dir, "*.json")).empty?
+
+    refute Dir.glob(File.join(@cache.dir, "*.json")).empty?
 
     @cache.clear
 
@@ -147,6 +152,7 @@ class CacheTest < Minitest::Test
     assert executed
     group_file = Dir.glob(File.join(@cache.dir, "*.json")).first
     content = JSON.parse(File.read(group_file))
+
     assert(content.values.any? { |v| v.include?("initial content") })
   end
 
@@ -202,6 +208,7 @@ class CacheTest < Minitest::Test
     group_file = Dir.glob(File.join(@cache.dir, "*.json")).first
     content = JSON.parse(File.read(group_file))
     combined_value = content.values.find { |v| v.include?("content1") && v.include?("content2") }
+
     assert combined_value && !combined_value.empty?
   end
 
@@ -223,9 +230,10 @@ class CacheTest < Minitest::Test
     keys.each_with_index { |key, i| @cache.set(key, "value_#{i}") }
 
     json_files = Dir.glob(File.join(@cache.dir, "*.json"))
-    assert json_files.length > 1
+
+    assert_operator json_files.length, :>, 1
     json_files.each do |file|
-      assert File.basename(file).match?(/^[0-9a-f]{2}\.json$/)
+      assert_match(/^[0-9a-f]{2}\.json$/, File.basename(file))
     end
   end
 
@@ -262,6 +270,7 @@ class CacheTest < Minitest::Test
     assert_equal "global_value", Cache.get("global_key")
     group_file = Dir.glob(File.join(dir1, "*.json")).first
     content = JSON.parse(File.read(group_file))
+
     assert_equal "global_value", content["global_key"]
 
     $cache = nil
@@ -311,6 +320,7 @@ class CacheTest < Minitest::Test
     $cache = Cache.new(dir: dir1)
 
     Cache.set("key", "value")
+
     assert Cache.get("key") && !Cache.get("key").empty?
 
     Cache.clear
@@ -333,7 +343,8 @@ class CacheTest < Minitest::Test
 
     cache1_files = Dir.glob(File.join(@cache.dir, "*.json"))
     cache2_files = Dir.glob(File.join(@cache2.dir, "*.json"))
-    assert cache1_files.first != cache2_files.first
+
+    refute_equal cache1_files.first, cache2_files.first
   end
 
   def test_json_files_are_pretty_formatted
@@ -343,8 +354,9 @@ class CacheTest < Minitest::Test
 
     group_file = Dir.glob(File.join(@cache.dir, "*.json")).first
     file_content = File.read(group_file)
-    assert file_content.include?("\n")
-    assert file_content.include?("  ")
+
+    assert_includes file_content, "\n"
+    assert_includes file_content, "  "
   end
 
   def test_default_root_dir_uses_global_root_dir_when_defined
@@ -378,6 +390,7 @@ class CacheTest < Minitest::Test
 
       cache = Cache.new
       expected_dir = File.join(test_root, "tmp/cache")
+
       assert_equal expected_dir, cache.dir
       assert Dir.exist?(expected_dir)
 
