@@ -24,7 +24,5 @@
         ]
       }
     ]
-  },
-  "type-aware": true,
-  "tsconfig": "./tsconfig.json"
+  }
 }
