@@ -26,6 +26,7 @@ gem "chronic"
 gem "path", path: "../gems/path"
 gem "with_advisory_lock"
 gem 'openssl'
+gem 'resend'
 
 group :development, :test do
   gem "pry"
