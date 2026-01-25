@@ -20,7 +20,7 @@ class PostgresPatch < BasePatch
           "sudo sh -c 'echo \"deb [arch=amd64 signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main\" > /etc/apt/sources.list.d/pgdg.list'"
         )
         Cmd.ssh("sudo DEBIAN_FRONTEND=noninteractive apt update")
-        Cmd.ssh("sudo DEBIAN_FRONTEND=noninteractive apt-get -y install postgresql-17 libpq-dev")
+        Cmd.ssh("sudo DEBIAN_FRONTEND=noninteractive apt-get -y install postgresql-18 libpq-dev")
         Instance.start_service("postgresql")
       end
 
@@ -35,7 +35,7 @@ class PostgresPatch < BasePatch
 
     private
 
-    def pg_hba_conf_path = "/etc/postgresql/17/main/pg_hba.conf"
+    def pg_hba_conf_path = "/etc/postgresql/18/main/pg_hba.conf"
 
     def pg_hba_conf = <<~TEXT
       local   all             postgres                                peer
