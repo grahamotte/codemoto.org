@@ -21,6 +21,22 @@ run = "for dir in gems/*/; do (cd \"$dir\" && bundle install); done"
 depends = ["dependencies:*"]
 
 #
+# Update
+#
+
+[tasks."update:backend"]
+run = "cd backend && bundle update"
+
+[tasks."update:frontend"]
+run = "cd frontend && bun update --latest"
+
+[tasks."update:gems"]
+run = "for dir in gems/*/; do (cd \"$dir\" && bundle update); done"
+
+[tasks.update]
+depends = ["update:*"]
+
+#
 # Reset
 #
 
