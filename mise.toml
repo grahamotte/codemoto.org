@@ -17,6 +17,12 @@ run = "cd deploy && mkdir -p log && bundle install"
 [tasks."dependencies:gems"]
 run = "for dir in gems/*/; do (cd \"$dir\" && bundle install); done"
 
+[tasks."dependencies:python"]
+run = [
+  "pip install --upgrade pip",
+  "pip install requests PyYAML numpy pandas pydantic",
+]
+
 [tasks.dependencies]
 depends = ["dependencies:*"]
 
