@@ -17,7 +17,6 @@ class AppPatch < BasePatch
         Cmd.ssh("cd #{Constants.remote_root}/backend; set -a; source ../.env; mise exec -- bin/rails db:migrate")
       end
 
-      Cmd.ssh("cd #{Constants.remote_root}/backend; set -a; source ../.env; mise exec -- bin/rails runner 'DeployResetter.call'")
       Cmd.ssh("rm -rf ~/tmp")
 
       Instance.write_service("api", api_service)
