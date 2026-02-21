@@ -97,13 +97,9 @@ run = "cd backend && rails db:rollback"
 # Start
 #
 
-[tasks."start:api"]
+[tasks."start:backend"]
 depends = ["dependencies:backend", "migrate"]
 run = "cd backend && bin/rails server --port 3000"
-
-[tasks."start:job"]
-depends = ["dependencies:backend", "migrate"]
-run = "cd backend && bin/jobs"
 
 [tasks."start:frontend"]
 depends = ["dependencies:frontend"]

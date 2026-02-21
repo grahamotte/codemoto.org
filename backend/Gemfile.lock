@@ -179,6 +179,13 @@ GEM
       raabro (~> 1.4)
     globalid (1.3.0)
       activesupport (>= 6.1)
+    good_job (4.13.3)
+      activejob (>= 6.1.0)
+      activerecord (>= 6.1.0)
+      concurrent-ruby (>= 1.3.1)
+      fugit (>= 1.11.0)
+      railties (>= 6.1.0)
+      thor (>= 1.0.0)
     hashdiff (1.2.1)
     httparty (0.24.2)
       csv
@@ -392,13 +399,6 @@ GEM
       activejob (>= 7.2)
       activerecord (>= 7.2)
       railties (>= 7.2)
-    solid_queue (1.3.1)
-      activejob (>= 7.1)
-      activerecord (>= 7.1)
-      concurrent-ruby (>= 1.3.1)
-      fugit (~> 1.11)
-      railties (>= 7.1)
-      thor (>= 1.3.1)
     stringio (3.2.0)
     thor (1.5.0)
     thruster (0.1.17)
@@ -458,6 +458,7 @@ DEPENDENCIES
   dry-schema
   faraday
   faraday-follow_redirects
+  good_job
   jwt
   mocha
   openssl
@@ -479,7 +480,6 @@ DEPENDENCIES
   sentry-rails
   sentry-ruby
   solid_cache
-  solid_queue
   thruster
   timeout
   vernier

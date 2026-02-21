@@ -11,6 +11,7 @@ class AppPatch < BasePatch
 
       Instance.stop_service("api")
       Instance.stop_service("job")
+      Cmd.ssh("sudo systemctl disable job.service || true")
 
       Cache.if_files_changed(Dir.glob(File.expand_path("../backend/db/migrate/*"))) do
         Cmd.ssh("cd #{Constants.remote_root}/backend; set -a; source ../.env; mise exec -- bin/rails db:migrate")
@@ -20,9 +21,7 @@ class AppPatch < BasePatch
       Cmd.ssh("rm -rf ~/tmp")
 
       Instance.write_service("api", api_service)
-      Instance.write_service("job", job_service)
       Cmd.ssh("sudo systemctl start api.service")
-      Cmd.ssh("sudo systemctl start job.service")
 
 
       Cmd.ssh("cd #{Constants.remote_root}/frontend; set -a; source ../.env; mise exec -- bun vite build")
@@ -50,22 +49,6 @@ class AppPatch < BasePatch
       User=#{Constants.deploy_user}
       Type=simple
       ExecStart=/usr/bin/bash -c 'cd #{Constants.remote_root}/backend && set -a && source ../.env && mise exec -- bin/rails server --port 3000'
-      Restart=always
-
-      [Install]
-      WantedBy=default.target
-    TEXT
-
-    def job_service = <<~TEXT
-      [Unit]
-      Description=Job
-      Wants=network-online-target
-      After=network-online-target
-
-      [Service]
-      User=#{Constants.deploy_user}
-      Type=simple
-      ExecStart=/usr/bin/bash -c 'cd #{Constants.remote_root}/backend && set -a && source ../.env && mise exec -- bin/jobs'
       Restart=always
 
       [Install]

@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  mount GoodJob::Engine => "/jobs"
+
   namespace :api do
     resources :noop, only: [] do
       collection do

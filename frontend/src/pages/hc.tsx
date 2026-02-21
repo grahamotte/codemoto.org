@@ -7,6 +7,7 @@ export const Hc = () => {
     frontendTime: string;
     backendTime: string;
     databaseTime: string;
+    hcJobFinishedAt?: string | null | undefined;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -19,6 +20,7 @@ export const Hc = () => {
           frontendTime: z.string(),
           backendTime: z.string(),
           databaseTime: z.string(),
+          hcJobFinishedAt: z.string().nullish(),
         }),
       })
         .then((data) => {
@@ -58,6 +60,7 @@ export const Hc = () => {
       <div>Frontend: {data?.frontendTime}</div>
       <div>Backend : {data?.backendTime}</div>
       <div>Database: {data?.databaseTime}</div>
+      <div>Jobs : {data?.hcJobFinishedAt}</div>
     </div>
   );
 };

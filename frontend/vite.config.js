@@ -16,6 +16,9 @@ export default defineConfig({
       "/api": {
         target: process.env.API_URL,
       },
+      "/jobs": {
+        target: process.env.API_URL,
+      },
     },
   },
   define: {

@@ -1,9 +1,11 @@
 class ApplicationJob < ActiveJob::Base
+  include GoodJob::ActiveJobExtensions::Concurrency
+
   TIMEOUT = 4.hour
 
   queue_as :default
 
-  limits_concurrency to: 1, key: "all", duration: TIMEOUT + 1.hour
+  good_job_control_concurrency_with total_limit: 1, key: "all"
 
   class << self
     def schedule(interval) = @schedule = interval

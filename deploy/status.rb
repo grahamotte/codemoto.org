@@ -15,7 +15,7 @@ if Instance.running?
 
   puts "Services".magenta
 
-  services = ["app", "job", "nginx", "postgresql"]
+  services = ["app", "nginx", "postgresql"]
 
   services.each do |service|
     running = Instance.service_running?(service)
@@ -52,4 +52,3 @@ else
 end
 
 puts ""
-
