@@ -20,14 +20,14 @@ function childToString(node: IconChild): string {
   return `<${tag} ${str}/>`;
 }
 
-function buildSvg(iconChildren: IconChild[]): string {
+function buildSvg(iconChildren: IconChild[], color: string): string {
   const attrs = attrsToString({
     xmlns: "http://www.w3.org/2000/svg",
     width: 24,
     height: 24,
     viewBox: "0 0 24 24",
     fill: "none",
-    stroke: "black",
+    stroke: color,
     "stroke-width": 2,
     "stroke-linecap": "round",
     "stroke-linejoin": "round",
@@ -49,9 +49,9 @@ const iconsDir = join(
   "icons",
 );
 
-async function generate(name: string, icon: string) {
+async function generate(name: string, icon: string, color: string) {
   const mod = await import(pathToFileURL(join(iconsDir, `${icon}.js`)).href);
-  const svg = buildSvg(mod.default as IconChild[]);
+  const svg = buildSvg(mod.default as IconChild[], color);
 
   mkdirSync(imageDir, { recursive: true });
 
@@ -96,8 +96,8 @@ async function generate(name: string, icon: string) {
     ],
     start_url: "/",
     display: "standalone",
-    background_color: "#ffffff",
-    theme_color: "#ffffff",
+    background_color: color,
+    theme_color: color,
   };
   const manifestPath = join(publicDir, `${name}.webmanifest`);
   writeFileSync(manifestPath, JSON.stringify(webmanifest, null, 2) + "\n");
@@ -105,14 +105,25 @@ async function generate(name: string, icon: string) {
 }
 
 const args = process.argv.slice(2);
-if (args.length < 1 || args.length > 2) {
-  console.error("Usage: bun run scripts/favicons.ts <lucide-icon> [name]");
+
+function parseFlag(flag: string): string | undefined {
+  const prefix = `--${flag}=`;
+  return args.find((a) => a.startsWith(prefix))?.slice(prefix.length);
+}
+
+const positional = args.filter((a) => !a.startsWith("--"));
+
+if (positional.length < 1) {
+  console.error("Usage: bun run scripts/favicons.ts <lucide-icon> [--name=<name>] [--hex=<rrggbb>]");
   console.error("  lucide-icon: kebab-case icon name (e.g. heart, chess-queen)");
-  console.error("  name: output file prefix (defaults to lucide-icon name)");
+  console.error("  --name=<name>: output file prefix (defaults to lucide-icon name)");
+  console.error("  --hex=<rrggbb>: stroke/theme color without # (defaults to 000000)");
   process.exit(1);
 }
 
-const icon = args[0];
-const name = args[1] ?? icon;
-await generate(name, icon);
-console.log(`\nDone: ${name} (${icon})`);
+const icon = positional[0];
+const name = parseFlag("name") ?? icon;
+const rawHex = parseFlag("hex") ?? "000000";
+const color = `#${rawHex.replace(/^#/, "")}`;
+await generate(name, icon, color);
+console.log(`\nDone: ${name} (${icon}) color=${color}`);
