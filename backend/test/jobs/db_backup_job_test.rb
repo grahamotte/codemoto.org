@@ -25,7 +25,16 @@ class DbBackupJobTest < ActiveSupport::TestCase
     job.expects(:cmd).with("/usr/bin/pg_dump -U deploy --clean test_db > /home/deploy/test_db_1234567890.sql").returns("")
     job.expects(:cmd).with("export AWS_ACCESS_KEY_ID=test_access_key; export AWS_SECRET_ACCESS_KEY=test_secret_key; export AWS_REQUEST_CHECKSUM_CALCULATION=WHEN_REQUIRED; export AWS_RESPONSE_CHECKSUM_VALIDATION=WHEN_REQUIRED; aws --endpoint-url https://s3.example.com s3 cp /home/deploy/test_db_1234567890.sql s3://test-bucket/test_db_1234567890.sql").returns("")
     job.expects(:cmd).with("rm -f /home/deploy/test_db_1234567890.sql").returns("")
+    job.expects(:cmd).with("export AWS_ACCESS_KEY_ID=test_access_key; export AWS_SECRET_ACCESS_KEY=test_secret_key; export AWS_REQUEST_CHECKSUM_CALCULATION=WHEN_REQUIRED; export AWS_RESPONSE_CHECKSUM_VALIDATION=WHEN_REQUIRED; aws --endpoint-url https://s3.example.com s3api head-object --bucket test-bucket --key test_db_1234567890.sql").returns('{"ContentLength": 12345}')
     job.expects(:cmd).with("export AWS_ACCESS_KEY_ID=test_access_key; export AWS_SECRET_ACCESS_KEY=test_secret_key; export AWS_REQUEST_CHECKSUM_CALCULATION=WHEN_REQUIRED; export AWS_RESPONSE_CHECKSUM_VALIDATION=WHEN_REQUIRED; aws --endpoint-url https://s3.example.com s3 ls s3://test-bucket/test_db_").returns("")
     job.perform
+  end
+
+  def test_perform_raises_when_backup_is_empty
+    stub_request(:post, /slack\.com/).to_return(status: 200, body: "ok")
+    job = DbBackupJob.new
+    job.stubs(:cmd).returns("")
+    job.stubs(:cmd).with("export AWS_ACCESS_KEY_ID=test_access_key; export AWS_SECRET_ACCESS_KEY=test_secret_key; export AWS_REQUEST_CHECKSUM_CALCULATION=WHEN_REQUIRED; export AWS_RESPONSE_CHECKSUM_VALIDATION=WHEN_REQUIRED; aws --endpoint-url https://s3.example.com s3api head-object --bucket test-bucket --key test_db_1234567890.sql").returns('{"ContentLength": 0}')
+    assert_raises(RuntimeError) { job.perform }
   end
 end

@@ -25,6 +25,10 @@ class DbBackupJob < ApplicationJob
     cmd("#{exports} aws --endpoint-url #{endpoint} s3 cp #{path} s3://#{bucket}/#{key}")
     cmd("rm -f #{path}")
 
+    head_output = cmd("#{exports} aws --endpoint-url #{endpoint} s3api head-object --bucket #{bucket} --key #{key}")
+    byte_count = head_output.match(/"ContentLength":\s*(\d+)/)&.captures&.first.to_i
+    raise "Backup #{key} missing or empty (#{byte_count} bytes)" unless byte_count.positive?
+
     keep_backups_for = 60.days
     all_backups = cmd("#{exports} aws --endpoint-url #{endpoint} s3 ls s3://#{bucket}/#{db_name}_")
       .split("\n")
@@ -36,6 +40,9 @@ class DbBackupJob < ApplicationJob
     outdated_backups.each do |backup|
       cmd("#{exports} aws --endpoint-url #{endpoint} s3 rm s3://#{bucket}/#{backup}")
     end
+  rescue => e
+    Notify.call(":rotating_light: *DB BACKUP FAILED* :rotating_light:\n```#{e.message}```")
+    raise
   end
 
   def cmd(command)
