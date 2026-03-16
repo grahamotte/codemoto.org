@@ -193,6 +193,10 @@ run = "set -a && source .env.production && cd deploy && ruby restore.rb 2>&1 | t
 depends = ["dependencies:deploy"]
 run = "set -a && source .env.production && cd deploy && ruby pry.rb"
 
+[tasks."deploy:reboot"]
+depends = ["dependencies:deploy"]
+run = "set -a && source .env.production && cd deploy && ruby reboot.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_reboot.log"
+
 [tasks."deploy:status"]
 alias = ["status"]
 depends = ["dependencies:deploy"]
