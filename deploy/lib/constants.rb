@@ -27,6 +27,7 @@ class Constants
     def ssh_key_path
       @ssh_key_path ||= begin
         path = File.join(local_root, "deploy", "tmp", "id_rsa")
+        FileUtils.mkdir_p(File.dirname(path))
         File.write(path, ssh_key)
         File.chmod(0600, path)
         path
