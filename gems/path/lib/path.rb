@@ -241,6 +241,7 @@ class Path
 
       when :gif then "image/gif"
       when :heic then "image/heic"
+      when :heif then "image/heif"
       when :jpg, :jpeg then "image/jpeg"
       when :png then "image/png"
       when :webp then "image/webp"
