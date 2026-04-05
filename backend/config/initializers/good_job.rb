@@ -7,7 +7,7 @@ end
 
 Rails.application.configure do
   config.good_job.queues = ENV.fetch("GOOD_JOB_QUEUES", "*")
-  config.good_job.max_threads = ENV.fetch("GOOD_JOB_MAX_THREADS", "3").to_i
+  config.good_job.max_threads = ENV.fetch("GOOD_JOB_MAX_THREADS", "2").to_i
   config.good_job.poll_interval = ENV.fetch("GOOD_JOB_POLL_INTERVAL", "0.1").to_f
   config.good_job.enable_cron = ENV.fetch("GOOD_JOB_ENABLE_CRON", Rails.env.production?.to_s) == "true"
   config.good_job.cron_graceful_restart_period = 5.minutes

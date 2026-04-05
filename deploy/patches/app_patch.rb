@@ -47,6 +47,8 @@ class AppPatch < BasePatch
       [Service]
       User=#{Constants.deploy_user}
       Type=simple
+      Environment=LD_PRELOAD=/lib/x86_64-linux-gnu/libjemalloc.so.2
+      Environment=MALLOC_ARENA_MAX=2
       ExecStart=/usr/bin/bash -c 'cd #{Constants.remote_root}/backend && set -a && source ../.env && mise exec -- bin/rails server --port 3000'
       Restart=always
 
