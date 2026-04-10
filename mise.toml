@@ -101,6 +101,11 @@ run = "cd backend && rails db:rollback"
 depends = ["dependencies:backend", "migrate"]
 run = "cd backend && bin/rails server --port 3000"
 
+[tasks."start:jobs"]
+depends = ["dependencies:backend", "migrate"]
+env = { GOOD_JOB_ENABLE_CRON = "true" }
+run = "cd backend && bundle exec good_job start"
+
 [tasks."start:frontend"]
 depends = ["dependencies:frontend"]
 run = "cd frontend && bun vite"
