@@ -21,7 +21,8 @@ class Constants
     def backup_secret_access_key = ENV.fetch("BACKUP_SECRET_ACCESS_KEY")
     def backup_endpoint = ENV.fetch("BACKUP_ENDPOINT")
     def backup_bucket = ENV.fetch("BACKUP_BUCKET")
-    def origin_repo = ENV.fetch("ORIGIN_REPO")
+    def origin_repo = ENV.fetch("ORIGIN_REPO", "")
+    def origin_repo_backup = ENV.fetch("ORIGIN_REPO_BACKUP", "")
     def ssh_key = ENV.fetch("DEPLOY_SSH_KEY")
     def ssh_key_pub = ENV.fetch("DEPLOY_SSH_KEY_PUB")
     def ssh_key_path
