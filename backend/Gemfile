@@ -17,17 +17,23 @@ gem "aws-sdk-s3"
 gem "rexml"
 gem "timeout"
 gem "csv"
-gem "sentry-ruby"
-gem "sentry-rails"
 gem "xmlrpc"
 gem "faraday-follow_redirects"
 gem "bencode"
 gem "chronic"
 gem "path", path: "../gems/path"
 gem "with_advisory_lock"
-gem 'openssl'
-gem 'resend'
-gem 'ruby_llm'
+gem "openssl"
+gem "resend"
+gem "ruby_llm"
+gem "opentelemetry-sdk"
+gem "opentelemetry-exporter-otlp"
+gem "opentelemetry-exporter-otlp-logs"
+gem "opentelemetry-instrumentation-logger"
+gem "opentelemetry-instrumentation-rack"
+gem "opentelemetry-instrumentation-rails"
+gem "opentelemetry-instrumentation-active_record"
+gem "opentelemetry-instrumentation-action_pack"
 
 group :development, :test do
   gem "pry"

@@ -31,7 +31,6 @@ class DbBackupJobTest < ActiveSupport::TestCase
   end
 
   def test_perform_raises_when_backup_is_empty
-    stub_request(:post, /slack\.com/).to_return(status: 200, body: "ok")
     job = DbBackupJob.new
     job.stubs(:cmd).returns("")
     job.stubs(:cmd).with("export AWS_ACCESS_KEY_ID=test_access_key; export AWS_SECRET_ACCESS_KEY=test_secret_key; export AWS_REQUEST_CHECKSUM_CALCULATION=WHEN_REQUIRED; export AWS_RESPONSE_CHECKSUM_VALIDATION=WHEN_REQUIRED; aws --endpoint-url https://s3.example.com s3api head-object --bucket test-bucket --key test_db_1234567890.sql").returns('{"ContentLength": 0}')

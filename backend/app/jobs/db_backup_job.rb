@@ -1,9 +1,6 @@
 class DbBackupJob < ApplicationJob
   schedule "every 1 day"
 
-  include Sentry::Cron::MonitorCheckIns
-  sentry_monitor_check_ins
-
   def perform
     timestamp = Time.now.to_i
     access_key_id = ENV.fetch("BACKUP_ACCESS_KEY_ID")
@@ -40,9 +37,6 @@ class DbBackupJob < ApplicationJob
     outdated_backups.each do |backup|
       cmd("#{exports} aws --endpoint-url #{endpoint} s3 rm s3://#{bucket}/#{backup}")
     end
-  rescue => e
-    Notify.call(":rotating_light: *DB BACKUP FAILED* :rotating_light:\n```#{e.message}```")
-    raise
   end
 
   def cmd(command)

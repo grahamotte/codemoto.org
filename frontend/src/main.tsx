@@ -1,18 +1,7 @@
-import * as Sentry from "@sentry/react";
 import ReactDOM from "react-dom/client";
 import { Helmet } from "react-helmet";
 import { BrowserRouter, Route, Routes } from "react-router";
 import { Hc } from "./pages/hc";
-
-declare const VITE_RELEASE: string;
-
-Sentry.init({
-  dsn: import.meta.env.VITE_SENTRY_DSN_FRONTEND,
-  sendDefaultPii: true,
-  release: VITE_RELEASE,
-  environment: import.meta.env.VITE_ENV,
-  integrations: [Sentry.captureConsoleIntegration({ levels: ["error"] })],
-});
 
 const Head = ({ name, title }: { name: string; title: string }) => {
   const sizes = [512, 192, 180, 96, 32, 16];
