@@ -182,6 +182,10 @@ alias = ["ssh"]
 depends = ["dependencies:deploy"]
 run = "set -a && source .env.production && cd deploy && ruby ssh.rb"
 
+[tasks."deploy:cmd"]
+depends = ["dependencies:deploy"]
+run = "set -a && source .env.production && cd deploy && ruby cmd.rb"
+
 [tasks."deploy:htop"]
 depends = ["dependencies:deploy"]
 run = "set -a && source .env.production && cd deploy && ruby htop.rb"
