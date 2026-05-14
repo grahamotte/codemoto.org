@@ -4,4 +4,4 @@ source "https://rubygems.org"
 
 gemspec
 
-gem "path", path: "../path"
+gem "path", "0.0.0", path: "../path"

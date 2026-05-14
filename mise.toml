@@ -34,7 +34,7 @@ depends = ["dependencies:*"]
 run = "cd backend && bundle update"
 
 [tasks."update:frontend"]
-run = "cd frontend && pnpm update --latest"
+run = "cd frontend && pnpm update --latest --config.minimum-release-age=10080"
 
 [tasks."update:gems"]
 run = "for dir in gems/*/; do (cd \"$dir\" && bundle update); done"
