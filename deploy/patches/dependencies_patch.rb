@@ -11,9 +11,10 @@ class DependenciesPatch < BasePatch
         Cmd.ssh("echo 'deb [signed-by=/etc/apt/keyrings/mise-archive-keyring.gpg arch=amd64] https://mise.jdx.dev/deb stable main' | sudo tee /etc/apt/sources.list.d/mise.list")
         Cmd.ssh("sudo apt update")
         Cmd.ssh("sudo apt install -y mise")
-        Cmd.ssh("mise settings add idiomatic_version_file_enable_tools \"[]\"")
-        Cmd.ssh("mise settings set ruby.compile=false")
       end
+
+      Cmd.ssh("mise settings add idiomatic_version_file_enable_tools \"[]\"")
+      Cmd.ssh("mise settings set ruby.compile=false")
     end
 
     def needed?
