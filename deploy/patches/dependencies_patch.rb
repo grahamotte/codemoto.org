@@ -28,6 +28,7 @@ class DependenciesPatch < BasePatch
         Cmd.ssh("sudo apt update")
         Cmd.ssh("sudo apt install -y mise")
         Cmd.ssh("mise settings add idiomatic_version_file_enable_tools \"[]\"")
+        Cmd.ssh("mise settings set ruby.compile=false")
       end
     end
 

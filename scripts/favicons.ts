@@ -1,7 +1,7 @@
 import { execSync } from "child_process";
 import { copyFileSync, mkdirSync, writeFileSync } from "fs";
-import { join } from "path";
-import { pathToFileURL } from "url";
+import { dirname, join } from "path";
+import { fileURLToPath, pathToFileURL } from "url";
 
 type IconChild = [string, Record<string, string | number>, IconChild[]?];
 
@@ -35,7 +35,7 @@ function buildSvg(iconChildren: IconChild[], color: string): string {
   return `<svg ${attrs}>\n${iconChildren.map(childToString).join("\n")}\n</svg>\n`;
 }
 
-const repoRoot = join(import.meta.dir, "..");
+const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const imageDir = join(repoRoot, "frontend", "public", "images");
 const iconsDir = join(
   repoRoot,
@@ -114,7 +114,7 @@ function parseFlag(flag: string): string | undefined {
 const positional = args.filter((a) => !a.startsWith("--"));
 
 if (positional.length < 1) {
-  console.error("Usage: bun run scripts/favicons.ts <lucide-icon> [--name=<name>] [--hex=<rrggbb>]");
+  console.error("Usage: pnpm exec node scripts/favicons.ts <lucide-icon> [--name=<name>] [--hex=<rrggbb>]");
   console.error("  lucide-icon: kebab-case icon name (e.g. heart, chess-queen)");
   console.error("  --name=<name>: output file prefix (defaults to lucide-icon name)");
   console.error("  --hex=<rrggbb>: stroke/theme color without # (defaults to 000000)");

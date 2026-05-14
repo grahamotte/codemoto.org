@@ -13,7 +13,7 @@
     "forceConsistentCasingInFileNames": true,
     "moduleDetection": "force",
     "noEmit": true,
-    "baseUrl": ".",
+    "types": ["vite/client"],
     "paths": {
       "@/*": ["./src/*"]
     }

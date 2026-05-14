@@ -1,8 +1,8 @@
 class AppPatch < BasePatch
   class << self
     def always
-      Cache.if_files_changed(File.expand_path("../frontend/bun.lock")) do
-        Cmd.ssh("cd #{Constants.remote_root}/frontend; mise exec -- bun install")
+      Cache.if_files_changed(File.expand_path("../pnpm-lock.yaml")) do
+        Cmd.ssh("cd #{Constants.remote_root}/frontend; mise exec -- pnpm install --frozen-lockfile")
       end
 
       Cache.if_files_changed(File.expand_path("../backend/Gemfile.lock")) do
@@ -24,8 +24,8 @@ class AppPatch < BasePatch
       Cmd.ssh("sudo systemctl start job.service")
 
 
-      Cmd.ssh("cd #{Constants.remote_root}/frontend; set -a; source ../.env; mise exec -- bun vite build")
-      # Cmd.local("cd #{Constants.local_root}; set -a; source .env.production; cd frontend; mise exec -- bun vite build")
+      Cmd.ssh("cd #{Constants.remote_root}/frontend; set -a; source ../.env; mise exec -- pnpm exec vite build")
+      # Cmd.local("cd #{Constants.local_root}; set -a; source .env.production; cd frontend; mise exec -- pnpm exec vite build")
       # Cmd.local("rsync -av -e \"ssh -i #{Constants.ssh_key_path}\" #{Constants.local_root}/frontend/dist/ #{Constants.deploy_user}@#{Instance.ip}:#{Constants.remote_root}/frontend/dist/")
 
       begin

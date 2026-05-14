@@ -33,7 +33,7 @@ When the user says "remember this" or similar, do this:
 - Whenever something is null it's null | undefined, in zod terms it's nullish, NEVER type or check just null or just undefined, always both.
 - Do not add comments to the code
 - Do not test typescript code
-- Use `bun`, not npm
+- Use `pnpm`, not npm
 - Use `mise tsc` to typecheck -- DO NOT TYPE CHECK ANY OTHER WAY!
 - Use lodash when possible
 - Use ShadCN components, ask for them to be installed if they dont exist

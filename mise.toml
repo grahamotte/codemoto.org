@@ -9,7 +9,7 @@ _.file = '.env'
 run = "cd backend && mkdir -p log && bundle install"
 
 [tasks."dependencies:frontend"]
-run = "cd frontend && mkdir -p log && bun install"
+run = "cd frontend && mkdir -p log && pnpm install"
 
 [tasks."dependencies:deploy"]
 run = "cd deploy && mkdir -p log && bundle install"
@@ -34,7 +34,7 @@ depends = ["dependencies:*"]
 run = "cd backend && bundle update"
 
 [tasks."update:frontend"]
-run = "cd frontend && bun update --latest"
+run = "cd frontend && pnpm update --latest"
 
 [tasks."update:gems"]
 run = "for dir in gems/*/; do (cd \"$dir\" && bundle update); done"
@@ -66,7 +66,7 @@ run = [
   "cd frontend && rm -rf node_modules || true",
   "cd frontend && rm -rf .vite || true",
   "cd frontend && rm -rf .react-router || true",
-  "cd frontend && bun install",
+  "cd frontend && pnpm install",
 ]
 
 [tasks.reset]
@@ -108,7 +108,7 @@ run = "cd backend && bundle exec good_job start"
 
 [tasks."start:frontend"]
 depends = ["dependencies:frontend"]
-run = "cd frontend && bun vite"
+run = "cd frontend && pnpm exec vite"
 
 [tasks.start]
 depends = ["start:*"]
@@ -139,9 +139,9 @@ run = [
 [tasks."test:frontend"]
 depends = ["dependencies:frontend"]
 run = [
-  "cd frontend && bunx oxlint src --type-aware --react-plugin --config=.oxlintrc.json",
-  "cd frontend && bun tsc",
-  # "cd frontend && bun test"
+  "cd frontend && pnpm exec oxlint src --type-aware --react-plugin --config=.oxlintrc.json",
+  "cd frontend && pnpm exec tsc",
+  # "cd frontend && pnpm test"
 ]
 
 [tasks."test:gems"]

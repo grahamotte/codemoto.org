@@ -11,6 +11,8 @@ module Api
     end
 
     def hc
+      HcJob.perform_later
+
       render json: {
         frontend_time: params[:frontend_time],
         backend_time: Time.current,
@@ -22,9 +24,9 @@ module Api
     private
 
     def latest_hc_job_finished_at
-      return if ActiveRecord::Base.connection.data_source_exists?("good_jobs").blank?
+      return if ActiveRecord::Base.connection.data_source_exists?("good_job_executions").blank?
 
-      GoodJob::Job.where(job_class: "HcJob").where.not(finished_at: nil).order(finished_at: :desc).pick(:finished_at)&.utc
+      GoodJob::Execution.finished.where(job_class: "HcJob").order(finished_at: :desc).pick(:finished_at)&.utc
     end
   end
 end

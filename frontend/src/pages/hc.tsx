@@ -57,10 +57,10 @@ export const Hc = () => {
       <div style={{ fontWeight: "bold", marginBottom: 10 }}>
         {import.meta.env.VITE_TITLE}
       </div>
-      <div>Frontend: {data?.frontendTime}</div>
-      <div>Backend : {data?.backendTime}</div>
-      <div>Database: {data?.databaseTime}</div>
-      <div>Jobs : {data?.hcJobFinishedAt}</div>
+      <div>Frontend&nbsp;= {data?.frontendTime}</div>
+      <div>Backend&nbsp;&nbsp;= {data?.backendTime}</div>
+      <div>Database&nbsp;= {data?.databaseTime}</div>
+      <div>Jobs&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= {data?.hcJobFinishedAt}</div>
     </div>
   );
 };

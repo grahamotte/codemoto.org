@@ -8,12 +8,12 @@ Gem::Specification.new do |spec|
   spec.files = Dir["lib/**/*.rb"]
   spec.require_paths = [ "lib" ]
 
-  spec.add_dependency "addressable"
-  spec.add_dependency "path"
-  spec.add_dependency "uri"
+  spec.add_dependency "addressable", "2.9.0"
+  spec.add_dependency "path", "0.0.0"
+  spec.add_dependency "uri", "1.1.1"
 
-  spec.add_development_dependency "minitest"
-  spec.add_development_dependency "rubocop"
-  spec.add_development_dependency "rubocop-rails-omakase"
-  spec.add_development_dependency "rubocop-minitest"
+  spec.add_development_dependency "minitest", "6.0.6"
+  spec.add_development_dependency "rubocop", "1.86.2"
+  spec.add_development_dependency "rubocop-rails-omakase", "1.1.0"
+  spec.add_development_dependency "rubocop-minitest", "0.39.1"
 end
