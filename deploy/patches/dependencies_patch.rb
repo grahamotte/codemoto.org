@@ -4,22 +4,6 @@ class DependenciesPatch < BasePatch
       Instance.install_package("ffmpeg")
       Instance.install_package("imagemagick", bin: "convert")
 
-      if Instance.not_installed?("yt-dlp")
-        Cmd.ssh(
-          "sudo curl -L https://github.com/yt-dlp/yt-dlp-master-builds/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp"
-        )
-        Cmd.ssh("sudo chmod a+rx /usr/local/bin/yt-dlp")
-        Cmd.ssh("yt-dlp --version")
-      end
-
-      if Instance.not_installed?("gallery-dl")
-        Cmd.ssh(
-          "sudo curl -L https://github.com/mikf/gallery-dl/releases/latest/download/gallery-dl.bin -o /usr/local/bin/gallery-dl"
-        )
-        Cmd.ssh("sudo chmod a+rx /usr/local/bin/gallery-dl")
-        Cmd.ssh("gallery-dl --version")
-      end
-
       unless Instance.installed?("mise")
         Cmd.ssh("sudo apt update -y && sudo apt install -y gpg sudo wget curl")
         Cmd.ssh("sudo install -dm 755 /etc/apt/keyrings")
