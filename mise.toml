@@ -15,7 +15,12 @@ run = "cd frontend && mkdir -p log && pnpm install"
 run = "cd deploy && mkdir -p log && bundle install"
 
 [tasks."dependencies:gems"]
-run = "for dir in gems/*/; do (cd \"$dir\" && bundle install); done"
+run = '''
+printf "%s\0" gems/*/ | xargs -0 -n 1 -P 4 sh -c '
+  cd "$1"
+  bundle install
+' sh
+'''
 
 [tasks."dependencies:python"]
 run = [
@@ -146,7 +151,13 @@ run = [
 
 [tasks."test:gems"]
 depends = ["dependencies:gems"]
-run = "for dir in gems/*/; do (cd \"$dir\" && bundle exec rubocop && bundle exec ruby -Itest -e 'Dir.glob(\"test/**/*_test.rb\").each { |f| require_relative f }'); done"
+run = '''
+printf "%s\0" gems/*/ | xargs -0 -n 1 -P 4 sh -c '
+  cd "$1"
+  bundle exec rubocop
+  bundle exec ruby -Itest -e "Dir.glob(\"test/**/*_test.rb\").each { |f| require_relative f }"
+' sh
+'''
 
 [tasks."test"]
 depends = ["test:*"]
