@@ -126,6 +126,11 @@ depends = ["start:*"]
 depends = ["dependencies:backend"]
 run = "cd backend && rails console"
 
+[tasks.runner]
+depends = ["dependencies:backend"]
+env = { RAILS_LOG_LEVEL = "info" }
+run = 'cd backend && rails runner {{arg(name="code")}}'
+
 [tasks."console:production"]
 depends = ["dependencies:deploy"]
 run = "set -a && source .env.production && cd deploy && ruby fix.rb"
