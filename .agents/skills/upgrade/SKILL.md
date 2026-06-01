@@ -1,9 +1,9 @@
 ---
-name: version-bump
+name: upgrade
 description: Update all project versions to the latest available releases, including major versions. Use when bumping frontend package.json dependencies, Ruby Gemfiles/gemspecs, generated lockfiles, or .tool-versions tool versions.
 ---
 
-# Version Bump
+# Upgrade
 
 Use this skill when the user asks to update dependencies, bump versions, upgrade everything, or refresh project tool versions.
 

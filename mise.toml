@@ -119,21 +119,33 @@ run = "cd frontend && pnpm exec vite"
 depends = ["start:*"]
 
 #
-# Console
+# Debug
 #
 
 [tasks.console]
 depends = ["dependencies:backend"]
 run = "cd backend && rails console"
 
+[tasks."console:production"]
+depends = ["dependencies:deploy"]
+run = "set -a && source .env.production && cd deploy && ruby fix.rb"
+
 [tasks.runner]
 depends = ["dependencies:backend"]
 env = { RAILS_LOG_LEVEL = "info" }
 run = 'cd backend && rails runner {{arg(name="code")}}'
 
-[tasks."console:production"]
+[tasks."runner:production"]
 depends = ["dependencies:deploy"]
-run = "set -a && source .env.production && cd deploy && ruby fix.rb"
+run = "set -a && source .env.production && cd deploy && ruby runner.rb"
+
+[tasks.query]
+depends = ["dependencies:backend"]
+run = 'cd backend && rails runner "ActiveRecord::Base.connection.exec_query(ARGV[0]).rows.each { |r| puts r.inspect }" "{{arg(name=\"query\")}}"'
+
+[tasks."query:production"]
+depends = ["dependencies:deploy"]
+run = "set -a && source .env.production && cd deploy && ruby query.rb"
 
 #
 # Test
@@ -217,10 +229,6 @@ run = "set -a && source .env.production && cd deploy && ruby restore.rb 2>&1 | t
 [tasks."deploy:pry"]
 depends = ["dependencies:deploy"]
 run = "set -a && source .env.production && cd deploy && ruby pry.rb"
-
-[tasks."deploy:query"]
-depends = ["dependencies:deploy"]
-run = "set -a && source .env.production && cd deploy && ruby query.rb"
 
 [tasks."deploy:reboot"]
 depends = ["dependencies:deploy"]
