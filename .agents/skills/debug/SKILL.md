@@ -7,6 +7,8 @@ description: Debugging workflow for this project. Prioritizes local code inspect
 
 Debug only. Do not make changes or fix code unless prompted. Ask clarifying questions to narrow the problem.
 
+Do not read `.env`, `.env.production`, or any `.env.*` file — the `mise` tasks already have the appropriate environment access configured.
+
 ## Local
 
 Start here. All local tools target the development environment and cannot affect production.
