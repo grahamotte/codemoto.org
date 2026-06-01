@@ -11,7 +11,7 @@ class Cmd
       res
     end
 
-    def ssh(command, *opts, user: Constants.deploy_user)
+    def ssh(command, *opts, user: Constants.deploy_user, quiet: false)
       command = command.split("?").zip(opts.map { |x| Shellwords.escape(x) }).flatten.join if opts.present?
       command = command.gsub("\\*", "*")
 
@@ -23,8 +23,8 @@ class Cmd
       Net::SSH.start(Instance.ip, user, keys: [ Constants.ssh_key_path ], keys_only: true) do |s|
         s.open_channel do |channel|
           channel.exec(command) do
-            channel.on_data { |_, x| print(x); text += x }
-            channel.on_extended_data { |_, _, x| print(x); text += x }
+            channel.on_data { |_, x| print(x) unless quiet; text += x }
+            channel.on_extended_data { |_, _, x| print(x) unless quiet; text += x }
             channel.on_request("exit-status") { |_, x| code = x.read_long }
           end
         end

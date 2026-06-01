@@ -1,4 +1,6 @@
 require_relative "lib/require"
+require "csv"
+require "json"
 
 query = ARGV.join(" ").strip
 
@@ -12,13 +14,14 @@ unless /\A\s*(select|with|show|explain|table|values)\b/i.match?(query)
   exit 1
 end
 
-Cmd.ssh(
+output = Cmd.ssh(
   [
     "PGOPTIONS='-c default_transaction_read_only=on'",
     "psql",
     "-X",
     "-v ON_ERROR_STOP=1",
     "-P pager=off",
+    "--csv",
     "-U ?",
     "-d ?",
     "-c ?",
@@ -26,4 +29,8 @@ Cmd.ssh(
   Constants.deploy_user,
   Constants.db_name,
   query,
+  quiet: true,
 )
+
+csv = CSV.parse(output, headers: true)
+puts JSON.pretty_generate(csv.map(&:to_h))
