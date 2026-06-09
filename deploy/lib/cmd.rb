@@ -15,7 +15,7 @@ class Cmd
       command = command.split("?").zip(opts.map { |x| Shellwords.escape(x) }).flatten.join if opts.present?
       command = command.gsub("\\*", "*")
 
-      puts "SSH #{command}".green
+      puts "SSH #{command}".green unless quiet
 
       text = ""
       code = 0
