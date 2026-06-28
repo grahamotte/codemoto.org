@@ -643,6 +643,7 @@ class PathTest < Minitest::Test
     assert_equal "text/calendar", Path.mime_type("event.ics")
     assert_equal "application/x-sqlite3", Path.mime_type("database.db")
     assert_equal "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", Path.mime_type("sheet.xlsx")
+    assert_equal "application/x-ole-storage", Path.mime_type("project.mpp")
   end
 
   def test_media_type_returns_correct_type

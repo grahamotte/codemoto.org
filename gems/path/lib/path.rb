@@ -282,6 +282,7 @@ class Path
       when :db then "application/x-sqlite3"
       when :xlsx then "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
       when :nes then "application/x-nesrom"
+      when :mpp then "application/x-ole-storage"
 
       else
         "application/octet-stream"
