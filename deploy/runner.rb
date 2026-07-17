@@ -8,7 +8,7 @@ if code.blank?
 end
 
 Cmd.ssh(
-  "cd ? && RAILS_ENV=production bundle exec rails runner ?",
-  Constants.remote_root,
+  "cd ? && set -a && source ../.env && RAILS_ENV=production mise exec -- bundle exec rails runner ?",
+  File.join(Constants.remote_root, "backend"),
   code,
 )
