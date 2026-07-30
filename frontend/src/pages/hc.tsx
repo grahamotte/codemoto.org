@@ -37,6 +37,14 @@ export const Hc = () => {
     return () => clearInterval(interval);
   }, []);
 
+  const triggerBackendError = () => {
+    void req({
+      method: "post",
+      url: "/api/noop/error",
+      schema: z.any(),
+    }).catch(() => undefined);
+  };
+
   if (!data && !error) {
     return (
       <div style={{ fontFamily: "monospace", padding: 20 }}>Loading...</div>
@@ -61,6 +69,7 @@ export const Hc = () => {
       <div>Backend&nbsp;&nbsp;= {data?.backendTime}</div>
       <div>Database&nbsp;= {data?.databaseTime}</div>
       <div>Jobs&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= {data?.hcJobFinishedAt}</div>
+      <button onClick={triggerBackendError}>Trigger backend error</button>
     </div>
   );
 };

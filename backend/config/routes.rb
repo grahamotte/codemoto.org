@@ -8,6 +8,7 @@ Rails.application.routes.draw do
         get :ping
         get :lock
         get :hc
+        post :error
       end
     end
   end

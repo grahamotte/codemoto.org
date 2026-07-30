@@ -1,6 +1,6 @@
 module Api
   class NoopController < AuthorizedController
-    skip_before_action :authorize, only: [ :ping, :hc ]
+    skip_before_action :authorize, only: [ :ping, :hc, :error ]
 
     def ping
       render json: { message: "pong" }
@@ -19,6 +19,10 @@ module Api
         database_time: ActiveRecord::Base.connection.execute("SELECT NOW()")[0]["now"].utc,
         hc_job_finished_at: latest_hc_job_finished_at,
       }
+    end
+
+    def error
+      raise "Test backend error"
     end
 
     private

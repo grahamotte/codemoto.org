@@ -43,5 +43,11 @@ module Api
       assert_response :success
       assert_equal finished_at.iso8601(3), response.parsed_body.fetch("hc_job_finished_at")
     end
+
+    def test_error_raises
+      error = assert_raises(RuntimeError) { post error_api_noop_index_path }
+
+      assert_equal "Test backend error", error.message
+    end
   end
 end
