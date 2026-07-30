@@ -13,7 +13,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "uri", "1.1.1"
 
   spec.add_development_dependency "minitest", "6.0.6"
-  spec.add_development_dependency "rubocop", "1.86.2"
+  spec.add_development_dependency "rubocop", "1.88.2"
   spec.add_development_dependency "rubocop-rails-omakase", "1.1.0"
-  spec.add_development_dependency "rubocop-minitest", "0.39.1"
+  spec.add_development_dependency "rubocop-minitest", "0.40.0"
 end

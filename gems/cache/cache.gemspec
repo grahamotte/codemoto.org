@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = [ "lib" ]
 
   spec.add_development_dependency "minitest", "6.0.6"
-  spec.add_development_dependency "rubocop", "1.86.2"
+  spec.add_development_dependency "rubocop", "1.88.2"
   spec.add_development_dependency "rubocop-rails-omakase", "1.1.0"
-  spec.add_development_dependency "rubocop-minitest", "0.39.1"
+  spec.add_development_dependency "rubocop-minitest", "0.40.0"
 end
