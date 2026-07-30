@@ -25,7 +25,7 @@ class X
     end
 
     def host
-      dev? ? "http://localhost:5173" : "https://#{ENV.fetch("DOMAIN")}"
+      dev? ? ENV.fetch("TUNNEL_URL", ENV.fetch("APP_URL")) : "https://#{ENV.fetch("DOMAIN")}"
     end
 
     def wait(min = 0.5, max = 3.0)

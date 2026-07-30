@@ -12,6 +12,9 @@ export default defineConfig({
     },
   },
   server: {
+    allowedHosts: [".trycloudflare.com"],
+    host: "127.0.0.1",
+    strictPort: true,
     proxy: {
       "/api": {
         target: process.env.API_URL,

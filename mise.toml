@@ -115,8 +115,22 @@ run = "cd backend && bundle exec good_job start"
 depends = ["dependencies:frontend"]
 run = "cd frontend && pnpm exec vite"
 
+[tasks."start:tunnel"]
+usage = 'arg "[enabled]" default="false"'
+run = '''
+if [ "${usage_enabled?}" = "true" ]; then
+  cloudflared tunnel --config scripts/cloudflared.yml --url http://127.0.0.1:5173
+fi
+'''
+
 [tasks.start]
-depends = ["start:*"]
+usage = 'flag "--tunnel" help="Expose the app with a trycloudflare.com URL"'
+depends = [
+  { task = "start:backend" },
+  { task = "start:jobs" },
+  { task = "start:frontend" },
+  { task = "start:tunnel", args = ["{{usage.tunnel}}"] },
+]
 
 #
 # Debug
