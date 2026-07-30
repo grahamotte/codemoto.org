@@ -1,8 +1,8 @@
-good_job_dashboard_username = ENV.fetch("GOOD_JOB_DASHBOARD_USERNAME", 'admin')
-good_job_dashboard_password = ENV.fetch("GOOD_JOB_DASHBOARD_PASSWORD", 'coolbeans')
+dashboard_username = ENV.fetch("DASHBOARD_USERNAME", "admin")
+dashboard_password = ENV.fetch("DASHBOARD_PASSWORD", "coolbeans")
 
 GoodJob::Engine.middleware.use(Rack::Auth::Basic) do |username, password|
-  ActiveSupport::SecurityUtils.secure_compare(good_job_dashboard_username, username) & ActiveSupport::SecurityUtils.secure_compare(good_job_dashboard_password, password)
+  ActiveSupport::SecurityUtils.secure_compare(dashboard_username, username) & ActiveSupport::SecurityUtils.secure_compare(dashboard_password, password)
 end
 
 Rails.application.configure do
