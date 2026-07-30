@@ -1,6 +1,7 @@
 ---
 name: test
 description: Run `mise test` and fix failures by updating tests only. If code changes seem necessary, ask the user first. You may fix rubocop or lint/format errors without asking.
+disable-model-invocation: true
 ---
 
 # Test Command
