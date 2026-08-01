@@ -63,9 +63,12 @@ class DependenciesPatch < BasePatch
 
     def tool_versions
       File
-        .join(Constants.local_root, '.tool-versions')
+        .join(Constants.local_root, "mise.toml")
         .then { |x| File.readlines(x) }
-        .map(&:split)
+        .drop_while { |line| line.strip != "[tools]" }
+        .drop(1)
+        .take_while { |line| !line.start_with?("[") }
+        .filter_map { |line| line.match(/\A([^\s=]+)\s*=\s*"([^"]+)"/)&.captures }
         .to_h
     end
   end

@@ -241,21 +241,21 @@ depends = ["test:*"]
 
 [tasks."deploy"]
 depends = ["dependencies:deploy"]
-run = "set -a && source .env.production && cd deploy && ruby deploy.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_deploy.log"
+run = "set -o pipefail && set -a && source .env.production && cd deploy && ruby deploy.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_deploy.log"
 
 [tasks."deploy:quick"]
 alias = ["quick"]
 depends = ["dependencies:deploy"]
-run = "set -a && source .env.production && cd deploy && ruby quick.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_quick.log"
+run = "set -o pipefail && set -a && source .env.production && cd deploy && ruby quick.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_quick.log"
 
 [tasks."deploy:push"]
 alias = ["push"]
 depends = ["dependencies:deploy"]
-run = "set -a && source .env.production && cd deploy && ruby push.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_push.log"
+run = "set -o pipefail && set -a && source .env.production && cd deploy && ruby push.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_push.log"
 
 [tasks."deploy:destroy"]
 depends = ["dependencies:deploy"]
-run = "set -a && source .env.production && cd deploy && ruby destroy.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_destroy.log"
+run = "set -o pipefail && set -a && source .env.production && cd deploy && ruby destroy.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_destroy.log"
 
 [tasks."deploy:log"]
 depends = ["dependencies:deploy"]
@@ -276,11 +276,11 @@ run = "set -a && source .env.production && cd deploy && ruby htop.rb"
 
 [tasks."deploy:backup"]
 depends = ["dependencies:deploy"]
-run = "set -a && source .env.production && cd deploy && ruby backup.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_backup.log"
+run = "set -o pipefail && set -a && source .env.production && cd deploy && ruby backup.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_backup.log"
 
 [tasks."deploy:restore"]
 depends = ["dependencies:deploy"]
-run = "set -a && source .env.production && cd deploy && ruby restore.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_restore.log"
+run = "set -o pipefail && set -a && source .env.production && cd deploy && ruby restore.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_restore.log"
 
 [tasks."deploy:pry"]
 depends = ["dependencies:deploy"]
@@ -288,7 +288,7 @@ run = "set -a && source .env.production && cd deploy && ruby pry.rb"
 
 [tasks."deploy:reboot"]
 depends = ["dependencies:deploy"]
-run = "set -a && source .env.production && cd deploy && ruby reboot.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_reboot.log"
+run = "set -o pipefail && set -a && source .env.production && cd deploy && ruby reboot.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_reboot.log"
 
 [tasks."deploy:status"]
 alias = ["status"]

@@ -39,6 +39,19 @@ class DependenciesPatchTest < Minitest::Test
     refute DependenciesPatch.needed?
   end
 
+  def test_tool_versions
+    Constants.stubs(:local_root).returns("/app")
+    File.expects(:readlines).with("/app/mise.toml").returns([
+      "[tools]\n",
+      "ruby = \"4.0.6\"\n",
+      "node = \"26.5.1\"\n",
+      "\n",
+      "[env]\n",
+    ])
+
+    assert_equal({ "ruby" => "4.0.6", "node" => "26.5.1" }, DependenciesPatch.send(:tool_versions))
+  end
+
   def test_apply
     Constants.stubs(:remote_root).returns("/app")
     Cmd.expects(:ssh).with("cd /app && mise -y trust -a")
