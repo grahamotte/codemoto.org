@@ -6,7 +6,7 @@ settings:
 
 importers:
 
-  frontend:
+  .:
     dependencies:
       '@tailwindcss/vite':
         specifier: 4.3.3

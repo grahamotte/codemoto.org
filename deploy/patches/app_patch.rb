@@ -1,7 +1,7 @@
 class AppPatch < BasePatch
   class << self
     def always
-      Cache.if_files_changed(File.expand_path("../pnpm-lock.yaml")) do
+      Cache.if_files_changed(File.expand_path("../frontend/pnpm-lock.yaml")) do
         Cmd.ssh("cd #{Constants.remote_root}/frontend; mise exec -- pnpm install --frozen-lockfile")
       end
 
