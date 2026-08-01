@@ -24,7 +24,9 @@ class AppPatch < BasePatch
       Cmd.ssh("sudo systemctl start job.service")
 
 
-      Cmd.ssh("cd #{Constants.remote_root}/frontend; set -a; source ../.env; mise exec -- pnpm exec vite build")
+      Subdomains.frontends.each do |subdomain|
+        Cmd.ssh("cd #{Constants.remote_root}/frontend; set -a; source ../.env; VITE_SUBDOMAIN=#{subdomain.fetch(:name)} mise exec -- pnpm exec vite build")
+      end
       # Cmd.local("cd #{Constants.local_root}; set -a; source .env.production; cd frontend; mise exec -- pnpm exec vite build")
       # Cmd.local("rsync -av -e \"ssh -i #{Constants.ssh_key_path}\" #{Constants.local_root}/frontend/dist/ #{Constants.deploy_user}@#{Instance.ip}:#{Constants.remote_root}/frontend/dist/")
 

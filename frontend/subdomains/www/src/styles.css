@@ -1,0 +1,32 @@
+html {
+  min-height: 100dvh;
+  height: 100dvh;
+  min-width: 100dvw;
+  width: 100dvw;
+  overscroll-behavior: none;
+}
+
+@layer base {
+  button:not([disabled]),
+  [role="button"]:not([disabled]) {
+    cursor: pointer;
+  }
+}
+
+:root {
+  font-family: ui-monospace, monospace;
+  color: #fafafa;
+  background: #0a0a0a;
+}
+
+body {
+  margin: 0;
+}
+
+main {
+  display: grid;
+  min-height: 100dvh;
+  place-items: center;
+  padding: 2rem;
+  text-align: center;
+}

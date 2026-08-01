@@ -73,21 +73,15 @@ class Cloudflare
     end
 
     def desired_dns_records
-      [
+      Subdomains.domains.map do |domain|
         {
           type: "A",
-          name: Constants.domain,
+          name: domain,
           content: Instance.ip,
           proxied: false,
           ttl: 1,
-        },
-        {
-          type: "A",
-          name: "www.#{Constants.domain}",
-          content: Instance.ip,
-          proxied: false,
-          ttl: 1,
-        },
+        }
+      end + [
         {
           type: "MX",
           name: Constants.domain,
@@ -144,4 +138,3 @@ class Cloudflare
     end
   end
 end
-

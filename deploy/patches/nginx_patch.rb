@@ -42,12 +42,20 @@ class NginxPatch < BasePatch
           server {
             listen 80;
             listen [::]:80;
-            server_name #{Constants.domain};
-            return 301 https://$server_name$request_uri;
+            server_name #{Subdomains.domains.join(" ")};
+            return 301 https://$host$request_uri;
           }
 
+          #{subdomain_servers}
+        }
+      TEXT
+    end
+
+    def subdomain_servers
+      Subdomains.all.map do |subdomain|
+        <<~TEXT
           server {
-            server_name #{Constants.domain};
+            server_name #{Subdomains.domains(subdomain).join(" ")};
             listen 443 ssl http2;
             include /etc/letsencrypt/options-ssl-nginx.conf;
             ssl_certificate /etc/letsencrypt/live/#{Constants.domain}/fullchain.pem;
@@ -56,42 +64,38 @@ class NginxPatch < BasePatch
             ssl_stapling on;
             ssl_stapling_verify on;
 
-            root #{Constants.remote_root}/frontend/dist;
-            index index.html;
-
-            location /jobs {
-              proxy_pass http://localhost:3000;
-              proxy_set_header Host $host;
-              proxy_set_header X-Real-IP $remote_addr;
-              proxy_set_header X-Forwarded-Host $host;
-              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            }
-
-            location /errors {
-              proxy_pass http://localhost:3000;
-              proxy_set_header Host $host;
-              proxy_set_header X-Real-IP $remote_addr;
-              proxy_set_header X-Forwarded-Host $host;
-              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            }
-
-            location / {
-              try_files $uri /index.html;
-            }
-
-            location /assets/ {
-              expires max;
-              add_header Cache-Control "public, max-age=31536000, immutable";
-            }
-
-            location /api/ {
-              proxy_pass http://localhost:3000;
-              proxy_set_header Host $host;
-              proxy_set_header X-Real-IP $remote_addr;
-              proxy_set_header X-Forwarded-Host $host;
-              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            }
+            #{subdomain[:backend].present? ? proxy_location("/") : frontend_locations(subdomain)}
           }
+        TEXT
+      end.join("\n")
+    end
+
+    def frontend_locations(subdomain)
+      <<~TEXT
+        root #{Subdomains.dist(subdomain)};
+        index index.html;
+
+        location / {
+          try_files $uri /index.html;
+        }
+
+        location /assets/ {
+          expires max;
+          add_header Cache-Control "public, max-age=31536000, immutable";
+        }
+
+        #{proxy_location("/api/")}
+      TEXT
+    end
+
+    def proxy_location(path)
+      <<~TEXT
+        location #{path} {
+          proxy_pass http://localhost:3000;
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-Host $host;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         }
       TEXT
     end

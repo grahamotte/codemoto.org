@@ -1,8 +1,9 @@
-import { req } from "@/lib/req";
+import { req } from "@/utils/req";
+import ReactDOM from "react-dom/client";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 
-export const Hc = () => {
+const Hc = () => {
   const [data, setData] = useState<{
     frontendTime: string;
     backendTime: string;
@@ -23,12 +24,16 @@ export const Hc = () => {
           hcJobFinishedAt: z.string().nullish(),
         }),
       })
-        .then((data) => {
-          setData(data);
+        .then((response) => {
+          setData(response);
           setError(null);
         })
-        .catch((error) => {
-          setError(error instanceof Error ? error.message : String(error));
+        .catch((responseError) => {
+          setError(
+            responseError instanceof Error
+              ? responseError.message
+              : String(responseError),
+          );
         });
     };
 
@@ -45,31 +50,27 @@ export const Hc = () => {
     }).catch(() => undefined);
   };
 
-  if (!data && !error) {
-    return (
-      <div style={{ fontFamily: "monospace", padding: 20 }}>Loading...</div>
-    );
-  }
+  if (!data && !error) return <main>Loading...</main>;
 
   if (error) {
     return (
-      <div style={{ fontFamily: "monospace", padding: 20 }}>
-        <div style={{ color: "red", fontWeight: "bold" }}>ERROR</div>
-        <div style={{ color: "red" }}>{error}</div>
-      </div>
+      <main>
+        <strong>ERROR</strong>
+        <div>{error}</div>
+      </main>
     );
   }
 
   return (
-    <div style={{ fontFamily: "monospace", padding: 20 }}>
-      <div style={{ fontWeight: "bold", marginBottom: 10 }}>
-        {import.meta.env.VITE_TITLE}
-      </div>
-      <div>Frontend&nbsp;= {data?.frontendTime}</div>
-      <div>Backend&nbsp;&nbsp;= {data?.backendTime}</div>
-      <div>Database&nbsp;= {data?.databaseTime}</div>
-      <div>Jobs&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= {data?.hcJobFinishedAt}</div>
+    <main>
+      <strong>{import.meta.env.VITE_TITLE}</strong>
+      <div>Frontend = {data?.frontendTime}</div>
+      <div>Backend = {data?.backendTime}</div>
+      <div>Database = {data?.databaseTime}</div>
+      <div>Jobs = {data?.hcJobFinishedAt}</div>
       <button onClick={triggerBackendError}>Trigger backend error</button>
-    </div>
+    </main>
   );
 };
+
+ReactDOM.createRoot(document.getElementById("root")!).render(<Hc />);

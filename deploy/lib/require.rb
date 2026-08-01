@@ -5,6 +5,7 @@ $root_dir = File.dirname(__FILE__).then { |x| File.dirname(x) }
 
 require_relative "core_extensions"
 require_relative "constants"
+require_relative "subdomains"
 require_relative "req"
 require_relative "cmd"
 require_relative "instance"

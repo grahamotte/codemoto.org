@@ -2,6 +2,7 @@ class CertPatch < BasePatch
   class << self
     def needed?
       return true if cert_expires_on.blank?
+      return true if certificate_domains.sort != Subdomains.domains.sort
 
       cert_expires_on - 14 < Date.today
     end
@@ -19,22 +20,31 @@ class CertPatch < BasePatch
         Cmd.ssh("sudo ln -s /snap/bin/certbot /usr/bin/certbot")
       end
 
-      Cmd.ssh("sudo rm -rf /etc/letsencrypt")
-      Cmd.ssh("sudo certbot --nginx certonly --non-interactive --agree-tos -m cert@#{Constants.domain} -d #{Constants.domain} -d www.#{Constants.domain}")
+      domains = Subdomains.domains.map { |x| "-d #{x}" }.join(" ")
+      Cmd.ssh("sudo certbot --nginx certonly --non-interactive --agree-tos --cert-name #{Constants.domain} -m cert@#{Constants.domain} #{domains}")
       Instance.stop_service("nginx")
     end
 
     private
 
     def cert_expires_on
-      Cmd
-        .ssh("sudo cat /etc/letsencrypt/live/#{Constants.domain}/fullchain.pem | openssl x509 -noout -enddate")
-        .split("=")
+      certificate
+        .lines
+        .first
+        .split("=", 2)
         .last
         .then { |x| Date.parse(x) }
     rescue StandardError => e
       puts e.message
       nil
+    end
+
+    def certificate_domains
+      certificate.scan(/DNS:([^,\s]+)/).flatten
+    end
+
+    def certificate
+      @certificate ||= Cmd.ssh("sudo cat /etc/letsencrypt/live/#{Constants.domain}/fullchain.pem | openssl x509 -noout -enddate -ext subjectAltName")
     end
 
     def default_nginx_conf

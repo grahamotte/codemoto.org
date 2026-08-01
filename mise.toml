@@ -1,3 +1,10 @@
+[tools]
+node = "26.5.1"
+pnpm = "11.17.0"
+ruby = "4.0.6"
+python = "3.14.6"
+deno = "2.9.4"
+
 [env]
 _.file = '.env'
 
@@ -103,33 +110,68 @@ run = "cd backend && rails db:rollback"
 #
 
 [tasks."start:backend"]
-depends = ["dependencies:backend", "migrate"]
+depends = ["dependencies:backend", "migrate", "start:details"]
 run = "cd backend && bin/rails server --port 3000"
 
 [tasks."start:jobs"]
-depends = ["dependencies:backend", "migrate"]
+depends = ["dependencies:backend", "migrate", "start:details"]
 env = { GOOD_JOB_ENABLE_CRON = "true" }
 run = "cd backend && bundle exec good_job start"
 
-[tasks."start:frontend"]
+[tasks."start:portless"]
 depends = ["dependencies:frontend"]
-run = "cd frontend && pnpm exec vite"
+dir = "frontend"
+interactive = true
+run = "pnpm exec portless proxy start --https"
 
-[tasks."start:tunnel"]
-usage = 'arg "[enabled]" default="false"'
+[tasks."start:subdomains"]
+depends = ["dependencies:frontend", "start:details"]
 run = '''
-if [ "${usage_enabled?}" = "true" ]; then
-  cloudflared tunnel --config scripts/cloudflared.yml --url http://127.0.0.1:5173
-fi
+node -e '
+  const fs = require("fs");
+  const base = process.env.LOCAL_DOMAIN || process.env.DOMAIN.split(".")[0];
+  for (const subdomain of JSON.parse(fs.readFileSync("frontend/subdomains.json")).filter(({ backend }) => backend)) {
+    const prefix = subdomain.subdomains.includes("") ? "" : `${subdomain.subdomains[0]}.`;
+    console.log(`${prefix}${base}`, 3000);
+  }
+' | xargs -n 2 sh -c 'pnpm --dir frontend exec portless alias "$1" "$2"' sh
+node -e '
+  const fs = require("fs");
+  const base = process.env.LOCAL_DOMAIN || process.env.DOMAIN.split(".")[0];
+  for (const subdomain of JSON.parse(fs.readFileSync("frontend/subdomains.json")).filter(({ directory }) => directory)) {
+    const prefix = subdomain.subdomains.includes("") ? "" : `${subdomain.subdomains[0]}.`;
+    console.log(subdomain.name, `${prefix}${base}`);
+  }
+' | xargs -n 2 -P 0 sh -c 'VITE_SUBDOMAIN="$1" pnpm --dir frontend exec portless "$2" pnpm exec vite' sh
+'''
+
+[tasks."start:details"]
+depends = ["start:portless"]
+run = '''
+node <<'NODE'
+const fs = require("fs");
+const subdomains = JSON.parse(fs.readFileSync("frontend/subdomains.json"));
+const base = process.env.LOCAL_DOMAIN || process.env.DOMAIN.split(".")[0];
+const rows = subdomains.map((subdomain) => {
+  const prefix = subdomain.subdomains.includes("") ? "" : `${subdomain.subdomains[0]}.`;
+  const label = subdomain.name.toUpperCase();
+  return [label, `https://${prefix}${base}.localhost`];
+});
+rows.push(["API", "http://localhost:3000"]);
+const labelWidth = Math.max(...rows.map(([label]) => label.length));
+const lines = [`${process.env.DOMAIN} · Development`, ...rows.map(([label, url]) => `${label.padEnd(labelWidth)}  ${url}`)];
+const width = Math.max(...lines.map((line) => line.length));
+console.log(`\n╔${"═".repeat(width + 2)}╗`);
+for (const line of lines) console.log(`║ ${line.padEnd(width)} ║`);
+console.log(`╚${"═".repeat(width + 2)}╝\n`);
+NODE
 '''
 
 [tasks.start]
-usage = 'flag "--tunnel" help="Expose the app with a trycloudflare.com URL"'
 depends = [
-  { task = "start:backend" },
-  { task = "start:jobs" },
-  { task = "start:frontend" },
-  { task = "start:tunnel", args = ["{{usage.tunnel}}"] },
+  "start:backend",
+  "start:jobs",
+  "start:subdomains",
 ]
 
 #
@@ -175,7 +217,7 @@ run = [
 [tasks."test:frontend"]
 depends = ["dependencies:frontend"]
 run = [
-  "cd frontend && pnpm exec oxlint src --type-aware --react-plugin --config=.oxlintrc.json",
+  "cd frontend && pnpm exec oxlint components utils subdomains/*/src --type-aware --react-plugin --config=.oxlintrc.json",
   "cd frontend && pnpm exec tsc",
   # "cd frontend && pnpm test"
 ]

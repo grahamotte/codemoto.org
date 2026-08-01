@@ -1,8 +1,8 @@
 import * as React from "react";
 
-import { cn } from "../lib/cn";
+import { cn } from "@/utils/cn";
 
-function Rows({
+function Cols({
   className,
   children,
   gap = 4,
@@ -40,8 +40,8 @@ function Rows({
 
   return (
     <div
-      data-slot="rows"
-      className={cn("flex flex-col", gapClass, className)}
+      data-slot="cols"
+      className={cn("flex flex-row items-center", gapClass, className)}
       {...props}
     >
       {children}
@@ -49,4 +49,4 @@ function Rows({
   );
 }
 
-export { Rows };
+export { Cols };

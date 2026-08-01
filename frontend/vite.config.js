@@ -1,14 +1,24 @@
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { execSync } from "child_process";
+import { readFileSync } from "fs";
 import path from "path";
 import { defineConfig } from "vite";
 
+const subdomains = JSON.parse(
+  readFileSync(path.resolve(__dirname, "subdomains.json")),
+);
+const subdomain = subdomains.find(
+  ({ name }) => name === (process.env.VITE_SUBDOMAIN || "www"),
+);
+
 export default defineConfig({
+  cacheDir: path.resolve(__dirname, "node_modules/.vite", subdomain.name),
+  root: path.resolve(__dirname, "..", subdomain.directory),
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      "@": __dirname,
     },
   },
   server: {
@@ -17,12 +27,6 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       "/api": {
-        target: process.env.API_URL,
-      },
-      "/jobs": {
-        target: process.env.API_URL,
-      },
-      "/errors": {
         target: process.env.API_URL,
       },
     },
@@ -34,6 +38,8 @@ export default defineConfig({
   },
   build: {
     chunkSizeWarningLimit: 100000000,
+    emptyOutDir: true,
+    outDir: path.resolve(__dirname, "dist", subdomain.name),
   },
   optimizeDeps: {
     rollupOptions: {},

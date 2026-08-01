@@ -8,7 +8,6 @@ class DnsPatch < BasePatch
     def apply
       if Cloudflare.zone_id.blank?
         Cloudflare.create_zone
-        sleep 5
       end
 
       Cloudflare.current_dns_records.each do |record|

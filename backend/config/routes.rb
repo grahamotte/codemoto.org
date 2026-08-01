@@ -1,6 +1,6 @@
 Rails.application.routes.draw do
-  mount GoodJob::Engine => "/jobs"
-  mount SolidErrors::Engine => "/errors"
+  constraints(host: /\Ajobs\./) { mount GoodJob::Engine => "/" }
+  constraints(host: /\Aerrors\./) { mount SolidErrors::Engine => "/" }
 
   namespace :api do
     resources :noop, only: [] do

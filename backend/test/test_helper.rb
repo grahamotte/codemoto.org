@@ -3,9 +3,6 @@ require_relative "../config/environment"
 require "rails/test_help"
 require "mocha/minitest"
 require "webmock/minitest"
-require "pry"
-
-BCrypt::Engine.cost = BCrypt::Engine::MIN_COST
 
 ENV["CRYPT_KEY"] = "test_key_123"
 

@@ -1,0 +1,17 @@
+:root {
+  font-family: monospace;
+}
+
+main {
+  display: grid;
+  gap: 8px;
+  padding: 20px;
+}
+
+strong {
+  color: red;
+}
+
+button {
+  width: fit-content;
+}
