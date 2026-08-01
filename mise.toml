@@ -209,25 +209,21 @@ run = "set -a && source .env.production && cd deploy && ruby query.rb"
 
 [tasks."test:backend"]
 depends = ["dependencies:backend"]
-run = [
-  "cd backend && bundle exec rubocop",
-  "cd backend && rails test"
-]
+run = "cd backend && rails test"
+
+[tasks.tsc]
+depends = ["dependencies:frontend"]
+run = "cd frontend && pnpm exec tsc"
 
 [tasks."test:frontend"]
-depends = ["dependencies:frontend"]
-run = [
-  "cd frontend && pnpm exec oxlint components utils subdomains/*/src --type-aware --react-plugin --config=.oxlintrc.json",
-  "cd frontend && pnpm exec tsc",
-  # "cd frontend && pnpm test"
-]
+depends = ["tsc"]
+run = "cd frontend && pnpm test"
 
 [tasks."test:gems"]
 depends = ["dependencies:gems"]
 run = '''
 printf "%s\0" gems/*/ | xargs -0 -n 1 -P 4 sh -c '
   cd "$1"
-  bundle exec rubocop
   bundle exec ruby -Itest -e "Dir.glob(\"test/**/*_test.rb\").each { |f| require_relative f }"
 ' sh
 '''

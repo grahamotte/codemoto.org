@@ -3,3 +3,5 @@ packages:
 
 minimumReleaseAge: 10080
 blockExoticSubdeps: true
+allowBuilds:
+  esbuild: true

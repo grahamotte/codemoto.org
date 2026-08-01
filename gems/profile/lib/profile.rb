@@ -3,9 +3,7 @@
 require 'vernier'
 require 'fileutils'
 
-# rubocop:disable Style/Documentation
 class Profile
-  # rubocop:enable Style/Documentation
   class << self
     def call(&block)
       raise ArgumentError, 'Block required' unless block_given?
