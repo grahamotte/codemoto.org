@@ -1,43 +1,51 @@
 require_relative "../test_helper"
 
 class InstanceCreatePatchTest < Minitest::Test
-  def test_needed_when_instance_is_not_running
-    Instance.stubs(:running?).returns(false)
+  def test_needed
+    Req.expects(:call).returns(droplets: [])
     assert InstanceCreatePatch.needed?
 
-    Instance.stubs(:running?).returns(true)
+    Instance.clear
+    Req.expects(:call).returns(droplets: [ active_instance ])
     refute InstanceCreatePatch.needed?
   end
 
-  def test_apply_creates_instance_and_updates_host_keys
-    Cache.expects(:clear)
-    Instance.expects(:clear)
-    Instance.expects(:create)
-    InstanceCreatePatch.stubs(:instance_ready?).returns(false, true)
-    InstanceCreatePatch.stubs(:sleep)
-    Instance.stubs(:ip).returns("1.2.3.4")
-    Constants.stubs(:domain).returns("example.com")
-    Cmd.expects(:local).with("ssh-keygen -R 1.2.3.4")
-    Cmd.expects(:local).with("ssh-keygen -R example.com")
-    Cmd.expects(:local).with("ssh-keyscan -H 1.2.3.4 >> ~/.ssh/known_hosts")
-    Cmd.expects(:local).with("ssh-keyscan -H example.com >> ~/.ssh/known_hosts")
+  def test_apply
+    Req.expects(:call).with(has_entry(:url, "https://api.digitalocean.com/v2/images"))
+      .returns(images: [ { slug: "ubuntu-x64", id: 1 } ])
+    Req.expects(:call).with(has_entry(:url, "https://api.digitalocean.com/v2/account/keys"))
+      .returns(ssh_keys: [ { fingerprint: "fingerprint", id: 2 } ])
+    Req.expects(:call).with(has_entries(method: :post, url: "https://api.digitalocean.com/v2/droplets"))
+      .returns(id: 3)
+    Req.expects(:call).with(has_entries(method: :get, url: "https://api.digitalocean.com/v2/droplets"))
+      .returns(droplets: [ active_instance ])
+    Cmd.expects(:ssh).with("echo !ass!tits!", user: "root").returns("!ass!tits!")
+    commands = []
+    Cmd.stubs(:local).with { |command, *| commands << command; true }
 
     InstanceCreatePatch.apply
+
+    assert_includes commands, "ssh-keygen -R 1.2.3.4"
+    assert_includes commands, "ssh-keygen -R example.com"
+    assert_includes commands, "ssh-keyscan -H 1.2.3.4 >> ~/.ssh/known_hosts"
+    assert_includes commands, "ssh-keyscan -H example.com >> ~/.ssh/known_hosts"
   end
 
-  def test_instance_ready
-    Instance.expects(:clear)
-    Instance.stubs(:running?).returns(true)
-    Cmd.expects(:ssh).with("echo !ass!tits!", user: "root").returns("!ass!tits!")
-
-    assert InstanceCreatePatch.send(:instance_ready?)
-  end
-
-  def test_instance_not_ready_on_ssh_failure
-    Instance.stubs(:clear)
-    Instance.stubs(:running?).returns(true)
+  def test_instance_ready_handles_ssh_failure
+    Req.expects(:call).returns(droplets: [ active_instance ])
     Cmd.expects(:ssh).raises("failure")
 
     refute InstanceCreatePatch.send(:instance_ready?)
+  end
+
+  private
+
+  def active_instance
+    {
+      name: "example.com",
+      id: 3,
+      status: "active",
+      networks: { v4: [ { type: "public", ip_address: "1.2.3.4" } ] },
+    }
   end
 end

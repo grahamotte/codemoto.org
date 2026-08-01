@@ -1,25 +1,39 @@
 require_relative "../test_helper"
 
-class BasePatchTest < Minitest::Test
-  def test_call_runs_always_and_applies_when_needed
-    patch = Class.new(BasePatch)
-    patch.stubs(:name).returns("ExamplePatch")
-    patch.stubs(:puts)
-    patch.expects(:always)
-    patch.expects(:needed?).returns(true)
-    patch.expects(:apply)
+class NeededTestPatch < BasePatch
+  class << self
+    attr_accessor :calls
 
-    patch.call
+    def always = calls << :always
+    def needed? = true
+    def apply = calls << :apply
+  end
+end
+
+class UnneededTestPatch < BasePatch
+  class << self
+    attr_accessor :calls
+
+    def always = calls << :always
+    def needed? = false
+    def apply = calls << :apply
+  end
+end
+
+class BasePatchTest < Minitest::Test
+  def test_call_applies_when_needed
+    NeededTestPatch.calls = []
+
+    NeededTestPatch.call
+
+    assert_equal [ :always, :apply ], NeededTestPatch.calls
   end
 
-  def test_call_skips_apply_when_not_needed
-    patch = Class.new(BasePatch)
-    patch.stubs(:name).returns("ExamplePatch")
-    patch.stubs(:puts)
-    patch.expects(:always)
-    patch.expects(:needed?).returns(false)
-    patch.expects(:apply).never
+  def test_call_skips_apply_when_unneeded
+    UnneededTestPatch.calls = []
 
-    patch.call
+    UnneededTestPatch.call
+
+    assert_equal [ :always ], UnneededTestPatch.calls
   end
 end

@@ -1,80 +1,63 @@
 require_relative "../test_helper"
 
 class DependenciesPatchTest < Minitest::Test
-  def setup
+  def test_always_with_installed_dependencies
+    commands = []
+    Cmd.stubs(:ssh).with { |command, *| commands << command; true }.returns("/usr/bin/tool")
+
+    DependenciesPatch.always
+
+    assert_includes commands, "which ffmpeg"
+    assert_includes commands, "which convert"
+    assert_includes commands, "which mise"
+    assert_includes commands, 'mise settings add idiomatic_version_file_enable_tools "[]"'
+    assert_includes commands, "mise settings set ruby.compile=false"
+    refute commands.any? { |command| command.include?("apt install -y mise") }
+  end
+
+  def test_always_installs_missing_dependencies
+    commands = []
+    Cmd.stubs(:ssh).with { |command, *| commands << command; true }.returns("")
+
+    DependenciesPatch.always
+
+    assert_includes commands, "sudo apt-get install -y ffmpeg"
+    assert_includes commands, "sudo apt-get install -y imagemagick"
+    assert_includes commands, "sudo apt install -y mise"
+  end
+
+  def test_needed
+    versions = DependenciesPatch.send(:tool_versions).transform_values { |version| [ { version:, installed: true } ] }
+    Cmd.expects(:ssh).with("mise list --json").returns(JSON.generate(versions))
+    refute DependenciesPatch.needed?
+
     DependenciesPatch.instance_variable_set(:@current_versions, nil)
-  end
-
-  def test_always_configures_packages_and_mise
-    Instance.expects(:install_package).with("ffmpeg")
-    Instance.expects(:install_package).with("imagemagick", bin: "convert")
-    Instance.stubs(:installed?).with("mise").returns(true)
-    Cmd.expects(:ssh).with('mise settings add idiomatic_version_file_enable_tools "[]"')
-    Cmd.expects(:ssh).with("mise settings set ruby.compile=false")
-
-    DependenciesPatch.always
-  end
-
-  def test_always_installs_missing_mise
-    Instance.stubs(:install_package)
-    Instance.stubs(:installed?).with("mise").returns(false)
-    Cmd.stubs(:ssh)
-    Cmd.expects(:ssh).with("sudo apt install -y mise")
-
-    DependenciesPatch.always
-  end
-
-  def test_needed_when_any_tool_version_is_missing
-    DependenciesPatch.stubs(:tool_versions).returns({ "ruby" => "4.0.6", "node" => "26" })
-    DependenciesPatch.expects(:version_not_installed?).with("ruby", "4.0.6").returns(false)
-    DependenciesPatch.expects(:version_not_installed?).with("node", "26").returns(true)
-
+    Cmd.expects(:ssh).with("mise list --json").returns("{}")
     assert DependenciesPatch.needed?
   end
 
-  def test_not_needed_when_all_versions_are_installed
-    DependenciesPatch.stubs(:tool_versions).returns({ "ruby" => "4.0.6" })
-    DependenciesPatch.stubs(:version_not_installed?).returns(false)
-
-    refute DependenciesPatch.needed?
-  end
-
   def test_tool_versions
-    Constants.stubs(:local_root).returns("/app")
-    File.expects(:readlines).with("/app/mise.toml").returns([
-      "[tools]\n",
-      "ruby = \"4.0.6\"\n",
-      "node = \"26.5.1\"\n",
-      "\n",
-      "[env]\n",
-    ])
+    versions = DependenciesPatch.send(:tool_versions)
 
-    assert_equal({ "ruby" => "4.0.6", "node" => "26.5.1" }, DependenciesPatch.send(:tool_versions))
+    assert_equal "4.0.6", versions.fetch("ruby")
+    assert_equal "26.5.1", versions.fetch("node")
   end
 
   def test_apply
-    Constants.stubs(:remote_root).returns("/app")
-    Cmd.expects(:ssh).with("cd /app && mise -y trust -a")
-    Cmd.expects(:ssh).with(includes("build-essential"))
-    Cmd.expects(:ssh).with("mkdir -p ~/tmp")
-    Cmd.expects(:ssh).with(includes("mise install --yes"), "/app")
+    commands = []
+    Cmd.stubs(:ssh).with { |command, *| commands << command; true }
 
     DependenciesPatch.apply
+
+    assert_includes commands, "cd /var/www/example.com && mise -y trust -a"
+    assert commands.any? { |command| command.include?("build-essential") }
+    assert_includes commands, "mkdir -p ~/tmp"
+    assert commands.any? { |command| command.include?("mise install --yes") }
   end
 
-  def test_version_installed
-    DependenciesPatch.stubs(:current_versions).returns(ruby: [ { version: "4.0.6", installed: true } ])
+  def test_current_versions_handles_failure
+    Cmd.expects(:ssh).with("mise list --json").raises("failure")
 
-    assert DependenciesPatch.send(:version_installed?, "ruby", "4.0.6")
-    refute DependenciesPatch.send(:version_installed?, "ruby", "3.0.0")
-  end
-
-  def test_current_versions_handles_invalid_output
-    Cmd.expects(:ssh).with("mise list --json").returns('{"ruby":[{"version":"4.0.6","installed":true}]}')
-    assert_equal "4.0.6", DependenciesPatch.send(:current_versions).dig(:ruby, 0, :version)
-
-    DependenciesPatch.instance_variable_set(:@current_versions, nil)
-    Cmd.expects(:ssh).raises("failure")
     assert_equal({}, DependenciesPatch.send(:current_versions))
   end
 end

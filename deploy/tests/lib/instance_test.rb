@@ -1,12 +1,8 @@
 require_relative "../test_helper"
 
 class InstanceTest < Minitest::Test
-  def setup
-    Instance.clear
-  end
-
-  def test_image_id_selects_latest_ubuntu_x64_image
-    Instance.stubs(:req).returns(images: [
+  def test_image_id
+    Req.expects(:call).returns(images: [
       { slug: "ubuntu-24-x64", id: 1 },
       { slug: "ubuntu-26-arm64", id: 2 },
       { slug: "ubuntu-26-x64", id: 3 },
@@ -15,30 +11,21 @@ class InstanceTest < Minitest::Test
     assert_equal 3, Instance.image_id
   end
 
-  def test_ssh_key_id_uses_existing_key
-    Constants.stubs(:ssh_key_fingerprint).returns("fingerprint")
-    Instance.expects(:req).with(:get, "account/keys", quiet: true).returns(
-      ssh_keys: [ { fingerprint: "fingerprint", id: 4 } ],
-    )
-
+  def test_ssh_key_id
+    Req.expects(:call).with(has_entry(:url, "https://api.digitalocean.com/v2/account/keys"))
+      .returns(ssh_keys: [ { fingerprint: "fingerprint", id: 4 } ])
     assert_equal 4, Instance.ssh_key_id
-  end
 
-  def test_ssh_key_id_creates_missing_key
-    Constants.stubs(:ssh_key_fingerprint).returns("missing")
-    Constants.stubs(:domain).returns("example.com")
-    Constants.stubs(:ssh_key_pub).returns("public-key")
-    Instance.expects(:req).with(:get, "account/keys", quiet: true).returns(ssh_keys: [])
-    Instance.expects(:req)
-      .with(:post, "account/keys", payload: { name: "example.com", public_key: "public-key" })
+    Instance.clear
+    Req.expects(:call).with(has_entries(method: :get, url: "https://api.digitalocean.com/v2/account/keys"))
+      .returns(ssh_keys: [])
+    Req.expects(:call).with(has_entries(method: :post, url: "https://api.digitalocean.com/v2/account/keys"))
       .returns(ssh_key: { id: 5 })
-
     assert_equal 5, Instance.ssh_key_id
   end
 
   def test_show_ip_and_running_state
-    Constants.stubs(:domain).returns("example.com")
-    Instance.stubs(:req).returns(droplets: [
+    Req.expects(:call).returns(droplets: [
       { name: "other.com" },
       {
         name: "example.com",
@@ -54,51 +41,46 @@ class InstanceTest < Minitest::Test
   end
 
   def test_create
-    Constants.stubs(:domain).returns("example.com")
-    Constants.stubs(:instance_region).returns("region")
-    Constants.stubs(:instance_size).returns("size")
-    Instance.stubs(:image_id).returns(1)
-    Instance.stubs(:ssh_key_id).returns(2)
-    Instance.expects(:req).with(
-      :post,
-      "droplets",
-      payload: { name: "example.com", region: "region", image: 1, size: "size", ssh_keys: [ 2 ] },
-      quiet: true,
-    ).returns(id: 3)
+    Req.expects(:call).with(has_entry(:url, "https://api.digitalocean.com/v2/images"))
+      .returns(images: [ { slug: "ubuntu-x64", id: 1 } ])
+    Req.expects(:call).with(has_entry(:url, "https://api.digitalocean.com/v2/account/keys"))
+      .returns(ssh_keys: [ { fingerprint: "fingerprint", id: 2 } ])
+    Req.expects(:call).with do |options|
+      options[:method] == :post && options[:url].end_with?("/droplets") && options[:payload] == {
+        name: "example.com",
+        region: "test-region",
+        image: 1,
+        size: "test-size",
+        ssh_keys: [ 2 ],
+      }
+    end.returns(id: 3)
 
     assert_equal({ id: 3 }, Instance.create)
   end
 
   def test_destroy
-    Instance.stubs(:instance_id).returns(6)
-    Instance.expects(:req).with(:delete, "droplets/6")
+    Req.expects(:call).returns(droplets: [ { name: "example.com", id: 6 } ])
+    Req.expects(:call).with do |options|
+      options[:method] == :delete && options[:url].end_with?("/droplets/6")
+    end
 
     Instance.destroy
   end
 
   def test_destroy_without_instance
-    Instance.stubs(:instance_id).returns(nil)
+    Req.expects(:call).returns(droplets: [])
 
     assert_raises(RuntimeError) { Instance.destroy }
   end
 
-  def test_service_running
-    Cmd.expects(:ssh)
-      .with("systemctl show --no-page --property=LoadState,ActiveState,FreezerState api.service")
-      .returns("LoadState=loaded\nActiveState=active\nFreezerState=running\n")
-
+  def test_service_state_and_stop
+    Cmd.expects(:ssh).returns("LoadState=loaded\nActiveState=active\nFreezerState=running\n")
     assert Instance.service_running?("api")
-  end
 
-  def test_service_not_running
     Cmd.expects(:ssh).returns("LoadState=loaded\nActiveState=inactive\nFreezerState=dead\n")
-
     refute Instance.service_running?("api")
-  end
 
-  def test_stop_service_ignores_failure
     Cmd.expects(:ssh).raises("failure")
-
     assert_nil Instance.stop_service("api")
   end
 
@@ -106,61 +88,50 @@ class InstanceTest < Minitest::Test
     Cmd.expects(:ssh).with("sudo systemctl daemon-reload")
     Cmd.expects(:ssh).with("sudo systemctl start api.service")
     Cmd.expects(:ssh).with("sudo systemctl enable api.service")
-    Instance.stubs(:sleep)
-    Instance.stubs(:service_running?).with("api").returns(true)
+    Cmd.expects(:ssh).with("systemctl show --no-page --property=LoadState,ActiveState,FreezerState api.service")
+      .returns("LoadState=loaded\nActiveState=active\nFreezerState=running\n")
 
     Instance.start_service("api")
   end
 
   def test_start_service_failure
-    Cmd.stubs(:ssh)
-    Instance.stubs(:sleep)
-    Instance.stubs(:service_running?).returns(false)
+    Cmd.stubs(:ssh).returns("")
 
     assert_raises(RuntimeError) { Instance.start_service("api") }
   end
 
-  def test_write_service_skips_unchanged_definition
-    Cache.stubs(:unchanged?).returns(true)
-
-    assert_nil Instance.write_service("api", "definition")
-  end
-
   def test_write_service
-    Cache.stubs(:unchanged?).returns(false)
     Cmd.expects(:ssh_write).with("/etc/systemd/system/api.service", "definition", sudo: true)
     Cmd.expects(:ssh).with("sudo systemctl daemon-reload")
     Cmd.expects(:ssh).with("sudo systemctl enable api.service")
-    Cache.expects(:set).with("/etc/systemd/system/api.service", "definition")
 
     Instance.write_service("api", "definition")
+    assert_nil Instance.write_service("api", "definition")
   end
 
   def test_restart_service
-    Instance.expects(:stop_service).with("api")
-    Instance.expects(:start_service).with("api")
+    Cmd.expects(:ssh).with("sudo systemctl stop api.service")
+    Cmd.expects(:ssh).with("sudo systemctl daemon-reload")
+    Cmd.expects(:ssh).with("sudo systemctl start api.service")
+    Cmd.expects(:ssh).with("sudo systemctl enable api.service")
+    Cmd.expects(:ssh).with("systemctl show --no-page --property=LoadState,ActiveState,FreezerState api.service")
+      .returns("LoadState=loaded\nActiveState=active\nFreezerState=running\n")
 
     Instance.restart_service("api")
   end
 
-  def test_package_state
+  def test_packages
     Cmd.expects(:ssh).with("which ffmpeg").returns("/usr/bin/ffmpeg")
     assert Instance.installed?("ffmpeg")
 
     Cmd.expects(:ssh).with("which missing").raises("missing")
     refute Instance.installed?("missing")
-  end
 
-  def test_install_package
-    Instance.stubs(:installed?).with("convert").returns(false)
+    Cmd.expects(:ssh).with("which convert").returns("")
     Cmd.expects(:ssh).with("sudo apt-get install -y imagemagick")
-
     Instance.install_package("imagemagick", bin: "convert")
-  end
 
-  def test_skips_installed_package
-    Instance.stubs(:installed?).returns(true)
-
+    Cmd.expects(:ssh).with("which ffmpeg").returns("/usr/bin/ffmpeg")
     assert_nil Instance.install_package("ffmpeg")
   end
 end

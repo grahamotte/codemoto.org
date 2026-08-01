@@ -5,7 +5,7 @@
   "version": "0.1.0",
   "packageManager": "pnpm@11.17.0",
   "scripts": {
-    "test": "vitest run --root . --environment jsdom"
+    "test": "vitest run --config vitest.config.js"
   },
   "browserslist": [
     "defaults"

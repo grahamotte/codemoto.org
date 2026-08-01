@@ -1,7 +1,6 @@
 ---
 name: test
-description: Run `mise test` and fix failures by updating tests only. If code changes seem necessary, ask the user first.
-disable-model-invocation: true
+description: Run `mise test` and fix failures by updating tests only. Use only when the user explicitly invokes `$test` or asks to use the test skill by name.
 ---
 
 # Test Command

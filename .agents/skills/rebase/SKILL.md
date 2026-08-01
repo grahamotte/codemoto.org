@@ -1,7 +1,6 @@
 ---
 name: rebase
-description: Run `mise rebase`, resolve conflicts and other actionable failures through as many iterations as needed, and run `mise test` after a successful rebase. Use when rebasing this repository or a downstream repository based on it.
-disable-model-invocation: true
+description: Run `mise rebase`, resolve conflicts and other actionable failures, and run `mise test`. Use only when the user explicitly invokes `$rebase` or asks to use the rebase skill by name.
 ---
 
 # Rebase Command

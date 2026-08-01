@@ -1,7 +1,6 @@
 ---
 name: upgrade
-description: Update all project versions to the latest available releases, including major versions. Use when bumping frontend package.json dependencies, Ruby Gemfiles/gemspecs, generated lockfiles, or .tool-versions tool versions.
-disable-model-invocation: true
+description: Update all project versions to the latest available releases, including major versions. Use only when the user explicitly invokes `$upgrade` or asks to use the upgrade skill by name.
 ---
 
 # Upgrade

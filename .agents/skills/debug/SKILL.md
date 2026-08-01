@@ -1,7 +1,6 @@
 ---
 name: debug
-description: Debugging tool reference for this project. Use for investigating application errors, failed jobs, production incidents, and unexpected behavior with local code, SQL, Solid Errors, Rails systemd journals, deployment status, and controlled production execution.
-disable-model-invocation: true
+description: Debugging tool reference for this project. Use only when the user explicitly invokes `$debug` or asks to use the debug skill by name.
 ---
 
 # Debug

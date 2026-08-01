@@ -1,39 +1,27 @@
 require_relative "../test_helper"
 
 class AppPatchTest < Minitest::Test
-  def setup
-    Constants.stubs(:remote_root).returns("/app")
-    Constants.stubs(:deploy_user).returns("deploy")
-    Constants.stubs(:domain).returns("example.com")
-    Cache.stubs(:if_files_changed)
-    Instance.stubs(:stop_service)
-    Instance.stubs(:write_service)
-    Cmd.stubs(:ssh)
-    Subdomains.stubs(:frontends).returns([ { name: "www" } ])
-    Req.stubs(:call)
-  end
-
-  def test_always_restarts_services_builds_frontends_and_pings
-    Instance.expects(:stop_service).with("api")
-    Instance.expects(:stop_service).with("job")
-    Instance.expects(:write_service).with("api", includes("Description=Api"))
-    Instance.expects(:write_service).with("job", includes("Description=Job Worker"))
-    Cmd.expects(:ssh).with("rm -rf ~/tmp")
-    Cmd.expects(:ssh).with("sudo systemctl start api.service")
-    Cmd.expects(:ssh).with("sudo systemctl start job.service")
-    Cmd.expects(:ssh).with(includes("VITE_SUBDOMAIN=www"))
+  def test_always
+    commands = []
+    services = []
+    Cmd.stubs(:ssh).with { |command, *| commands << command; true }.returns("")
+    Cmd.stubs(:ssh_write).with { |path, definition, **| services << [ path, definition ]; true }
     Req.expects(:call).with(method: :get, url: "https://example.com/api/noop/ping")
 
     AppPatch.always
-  end
 
-  def test_changed_dependencies_and_migrations_run_commands
-    Cache.stubs(:if_files_changed).yields
-    Cmd.expects(:ssh).with("cd /app/frontend; mise exec -- pnpm install --frozen-lockfile")
-    Cmd.expects(:ssh).with("cd /app/backend; mise exec -- bundle install")
-    Cmd.expects(:ssh).with("cd /app/backend; set -a; source ../.env; mise exec -- bin/rails db:migrate")
-
-    AppPatch.always
+    assert_includes commands, "cd /var/www/example.com/frontend; mise exec -- pnpm install --frozen-lockfile"
+    assert_includes commands, "cd /var/www/example.com/backend; mise exec -- bundle install"
+    assert_includes commands, "cd /var/www/example.com/backend; set -a; source ../.env; mise exec -- bin/rails db:migrate"
+    assert_includes commands, "rm -rf ~/tmp"
+    assert_includes commands, "sudo systemctl stop api.service"
+    assert_includes commands, "sudo systemctl stop job.service"
+    assert_includes commands, "sudo systemctl start api.service"
+    assert_includes commands, "sudo systemctl start job.service"
+    assert commands.any? { |command| command.include?("VITE_SUBDOMAIN=www") }
+    assert commands.any? { |command| command.include?("VITE_SUBDOMAIN=hc") }
+    assert services.any? { |path, definition| path.end_with?("api.service") && definition.include?("Description=Api") }
+    assert services.any? { |path, definition| path.end_with?("job.service") && definition.include?("Description=Job Worker") }
   end
 
   def test_service_definitions

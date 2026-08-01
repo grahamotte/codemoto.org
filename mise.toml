@@ -304,13 +304,6 @@ run = "set -a && source .env.production && cd deploy && ruby status.rb"
 # Other
 #
 
-[tasks.profile]
-depends = ["dependencies"]
-usage = '''
-arg "<file>" help="File to profile (e.g., backend/test/models/job_test.rb)"
-'''
-run = "bash scripts/ruby_profile.sh \"$usage_file\""
-
 [tasks.rebase]
 run = [
   "if [ -n \"$(git status --porcelain)\" ]; then echo 'Error: You have unstaged changes. Please commit or stash them before rebasing.'; exit 1; fi",

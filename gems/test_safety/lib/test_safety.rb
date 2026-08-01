@@ -3,11 +3,28 @@ require "socket"
 class UnsafeTestOperation < StandardError; end
 
 module TestSafety
+  ROOT = File.expand_path("../../..", __dir__)
+
+  module SleepStub
+    def sleep(duration = nil)
+      return super unless File.expand_path(caller_locations(1, 1).first.path).start_with?("#{TestSafety::ROOT}/")
+
+      duration
+    end
+  end
+
   module CommandGuard
     def system(*) = raise UnsafeTestOperation, "System commands must be stubbed in tests"
     def exec(*) = raise UnsafeTestOperation, "System commands must be stubbed in tests"
     def spawn(*) = raise UnsafeTestOperation, "System commands must be stubbed in tests"
-    def fork(*) = raise UnsafeTestOperation, "System commands must be stubbed in tests"
+    def fork(*)
+      return super if caller_locations.any? do |location|
+        location.path.end_with?("/active_support/testing/parallelization/worker.rb") ||
+          location.path.end_with?("/minitest/parallel_fork.rb")
+      end
+
+      raise UnsafeTestOperation, "System commands must be stubbed in tests"
+    end
 
     define_method(:"`") do |*|
       raise UnsafeTestOperation, "System commands must be stubbed in tests"
@@ -26,6 +43,8 @@ module TestSafety
   end
 end
 
+Kernel.prepend(TestSafety::SleepStub)
+Kernel.singleton_class.prepend(TestSafety::SleepStub)
 Kernel.prepend(TestSafety::CommandGuard)
 Kernel.singleton_class.prepend(TestSafety::CommandGuard)
 Process.singleton_class.prepend(TestSafety::CommandGuard)

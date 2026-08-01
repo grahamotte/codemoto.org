@@ -3,7 +3,13 @@
 require_relative "test_helper"
 
 class CacheTest < Minitest::Test
+  CLASS_METHOD_MUTEX = Mutex.new
+
   def setup
+    if name.start_with?("test_class_")
+      CLASS_METHOD_MUTEX.lock
+      @class_method_locked = true
+    end
     @temp_files = []
     @cache_dirs = []
   end
@@ -21,7 +27,10 @@ class CacheTest < Minitest::Test
       FileUtils.rm_f(file) if File.exist?(file)
     end
 
-    $cache = nil
+    if @class_method_locked
+      $cache = nil
+      CLASS_METHOD_MUTEX.unlock
+    end
   end
 
   def test_set_stores_value_and_creates_file

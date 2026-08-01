@@ -5,11 +5,17 @@ require "rails/test_help"
 require "mocha/minitest"
 require "webmock/minitest"
 
+class Token
+  def self.verify(token)
+    token == "valid"
+  end
+end unless defined?(Token)
+
 ENV["CRYPT_KEY"] = "test_key_123"
 
 module ActiveSupport
   class TestCase
-    parallelize(workers: :number_of_processors) unless ENV["PROFILE"]
+    parallelize(workers: 4, threshold: 0)
 
     def setup
       WebMock.reset!
