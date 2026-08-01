@@ -253,6 +253,11 @@ alias = ["push"]
 depends = ["dependencies:deploy"]
 run = "set -o pipefail && set -a && source .env.production && cd deploy && ruby push.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_push.log"
 
+[tasks."deploy:patch"]
+depends = ["dependencies:deploy"]
+usage = 'arg "<name>" help="Patch to apply (e.g., nginx)"'
+run = 'set -o pipefail && set -a && source .env.production && cd deploy && ruby patch.rb "$usage_name" 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_patch.log'
+
 [tasks."deploy:destroy"]
 depends = ["dependencies:deploy"]
 run = "set -o pipefail && set -a && source .env.production && cd deploy && ruby destroy.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_destroy.log"
