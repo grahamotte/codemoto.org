@@ -4,18 +4,23 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, test } from "vitest";
 
 describe("layout components", () => {
-  test("renders columns with their gap and custom classes", () => {
-    const html = renderToStaticMarkup(<Cols gap={2} className="custom" />);
+  test.each([ 0, 1, 2, 3, 4, 5, 6, 7, 8 ])("renders gap %i", (gap) => {
+    const cols = renderToStaticMarkup(<Cols gap={gap} />);
+    const rows = renderToStaticMarkup(<Rows gap={gap} />);
 
-    expect(html).toContain('data-slot="cols"');
-    expect(html).toContain('class="flex flex-row items-center gap-2 custom"');
+    expect(cols).toContain(`gap-${gap}`);
+    expect(rows).toContain(`gap-${gap}`);
   });
 
-  test("renders rows with their gap and children", () => {
-    const html = renderToStaticMarkup(<Rows gap={8}>Content</Rows>);
+  test("renders defaults, children, classes, and HTML props", () => {
+    const cols = renderToStaticMarkup(<Cols className="custom" id="cols">Columns</Cols>);
+    const rows = renderToStaticMarkup(<Rows className="custom" id="rows">Rows</Rows>);
 
-    expect(html).toContain('data-slot="rows"');
-    expect(html).toContain('class="flex flex-col gap-8"');
-    expect(html).toContain("Content");
+    expect(cols).toContain('data-slot="cols"');
+    expect(cols).toContain('class="flex flex-row items-center gap-4 custom"');
+    expect(cols).toContain('id="cols">Columns');
+    expect(rows).toContain('data-slot="rows"');
+    expect(rows).toContain('class="flex flex-col gap-4 custom"');
+    expect(rows).toContain('id="rows">Rows');
   });
 });

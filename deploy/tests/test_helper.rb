@@ -7,6 +7,15 @@ WebMock.disable_net_connect!
 
 require_relative "../lib/require"
 
+module DeployTestMethods
+  CMD_LOCAL = Cmd.method(:local)
+  REQ_CALL = Req.method(:call)
+end
+
+[ BasePatch, Cloudflare, Instance ].each do |klass|
+  klass.define_singleton_method(:puts) { |*| }
+end
+
 Cmd.define_singleton_method(:local) { |*, **| raise UnsafeTestOperation, "Cmd.local must be stubbed in deploy tests" }
 Cmd.define_singleton_method(:ssh) { |*, **| raise UnsafeTestOperation, "Cmd.ssh must be stubbed in deploy tests" }
 Cmd.define_singleton_method(:ssh_write) { |*, **| raise UnsafeTestOperation, "Cmd.ssh_write must be stubbed in deploy tests" }

@@ -86,6 +86,7 @@ export const login = ({
   password: string;
 }) => {
   return req({
+    method: "post",
     url: "/api/users/jwt",
     data: { handle: handle, password: password },
     schema: z.any(),
