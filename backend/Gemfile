@@ -12,6 +12,7 @@ gem "solid_errors", "0.7.0"
 group :development, :test do
   gem "annotaterb", "4.24.0"
   gem "mocha", "3.1.0"
+  gem "test_safety", "0.0.0", path: "../gems/test_safety", require: false
   gem "webmock", "3.26.2"
   gem "vernier", "1.10.1"
   gem "profile-viewer", "0.0.7"

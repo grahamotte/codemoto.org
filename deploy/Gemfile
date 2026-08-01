@@ -9,3 +9,10 @@ gem "ed25519", "1.4.0"
 gem "bcrypt_pbkdf", "1.1.2"
 gem "cache", "0.0.0", path: "../gems/cache"
 gem "csv", "3.3.6"
+
+group :test do
+  gem "minitest", "6.0.6"
+  gem "mocha", "3.1.0"
+  gem "test_safety", "0.0.0", path: "../gems/test_safety", require: false
+  gem "webmock", "3.26.2"
+end

@@ -211,6 +211,10 @@ run = "set -a && source .env.production && cd deploy && ruby query.rb"
 depends = ["dependencies:backend"]
 run = "cd backend && rails test"
 
+[tasks."test:deploy"]
+depends = ["dependencies:deploy"]
+run = 'cd deploy && bundle exec ruby -Itests -e "Dir.glob(\"tests/**/*_test.rb\").each { |f| require_relative f }"'
+
 [tasks.tsc]
 depends = ["dependencies:frontend"]
 run = "cd frontend && pnpm exec tsc"

@@ -11,5 +11,6 @@ require "securerandom"
 require "digest"
 require "json"
 require "tmpdir"
+require "test_safety"
 
 require_relative "../lib/cache"

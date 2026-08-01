@@ -1,4 +1,5 @@
 ENV["RAILS_ENV"] = "test"
+require "test_safety"
 require_relative "../config/environment"
 require "rails/test_help"
 require "mocha/minitest"
@@ -13,7 +14,7 @@ module ActiveSupport
     def setup
       WebMock.reset!
       WebMock::StubRegistry.instance.instance_variable_get(:@request_stubs).clear
-      WebMock.disable_net_connect!(allow_localhost: true)
+      WebMock.disable_net_connect!
     end
   end
 end

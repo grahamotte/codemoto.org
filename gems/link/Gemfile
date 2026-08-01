@@ -5,3 +5,7 @@ source "https://rubygems.org"
 gemspec
 
 gem "path", "0.0.0", path: "../path"
+
+group :test do
+  gem "test_safety", "0.0.0", path: "../test_safety", require: false
+end

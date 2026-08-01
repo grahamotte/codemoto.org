@@ -5,6 +5,11 @@ PATH
       base64 (= 0.3.0)
 
 PATH
+  remote: ../test_safety
+  specs:
+    test_safety (0.0.0)
+
+PATH
   remote: .
   specs:
     link (0.0.0)
@@ -34,6 +39,7 @@ DEPENDENCIES
   link!
   minitest (= 6.0.6)
   path (= 0.0.0)!
+  test_safety (= 0.0.0)!
 
 CHECKSUMS
   addressable (2.9.0) sha256=7fdf6ac3660f7f4e867a0838be3f6cf722ace541dd97767fa42bc6cfa980c7af
@@ -44,6 +50,7 @@ CHECKSUMS
   path (0.0.0)
   prism (1.9.0) sha256=7b530c6a9f92c24300014919c9dcbc055bf4cdf51ec30aed099b06cd6674ef85
   public_suffix (7.0.5) sha256=1a8bb08f1bbea19228d3bed6e5ed908d1cb4f7c2726d18bd9cadf60bc676f623
+  test_safety (0.0.0)
   uri (1.1.1) sha256=379fa58d27ffb1387eaada68c749d1426738bd0f654d812fcc07e7568f5c57c6
 
 BUNDLED WITH

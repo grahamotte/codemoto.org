@@ -8,5 +8,6 @@ Bundler.require(:default)
 require 'minitest/autorun'
 require 'fileutils'
 require 'tempfile'
+require "test_safety"
 
 require_relative '../lib/profile'

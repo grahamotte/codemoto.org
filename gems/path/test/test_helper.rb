@@ -10,5 +10,6 @@ require "digest"
 require "json"
 require "base64"
 require "tmpdir"
+require "test_safety"
 
 require_relative "../lib/path"
