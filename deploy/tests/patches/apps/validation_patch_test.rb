@@ -18,19 +18,21 @@ class AppsValidationPatchTest < Minitest::Test
     ENV["APPLE_KEY_ID"] = value
   end
 
-  def test_rejects_mismatched_version
-    File.write(
-      File.join(Apps.root, "versions", "1.2.3.json"),
-      JSON.generate(
-        description: "Description",
-        keywords: "app",
-        version: "2.0.0",
-        whatsNew: "Changes",
-      ),
-    )
-    Apps.instance_variable_set(:@release, nil)
+  def test_rejects_missing_metadata
+    Apps.config[:description] = ""
     Cmd.expects(:local).with("xcodebuild -version").returns("Xcode")
 
-    assert_raises(RuntimeError) { Apps::ValidationPatch.apply }
+    error = assert_raises(RuntimeError) { Apps::ValidationPatch.apply }
+
+    assert_equal "Missing description in app configuration", error.message
+  end
+
+  def test_requires_demo_credentials_when_sign_in_is_required
+    Apps.config[:demoAccountName] = ""
+    Cmd.expects(:local).with("xcodebuild -version").returns("Xcode")
+
+    error = assert_raises(RuntimeError) { Apps::ValidationPatch.apply }
+
+    assert_equal "Missing demoAccountName in app configuration", error.message
   end
 end

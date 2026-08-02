@@ -75,14 +75,32 @@ module DeployTestIsolation
   def configure_apps_fixture
     apps_root = File.join(@deploy_test_dir, "apps")
     project_path = File.join(apps_root, "apple", "App.xcodeproj")
+    screenshot_path = File.join(apps_root, "screenshots", "ios.jpeg")
     FileUtils.mkdir_p(File.join(apps_root, "apple", "App", "Config"))
-    FileUtils.mkdir_p(File.join(apps_root, "versions"))
+    FileUtils.mkdir_p(File.dirname(screenshot_path))
     FileUtils.mkdir_p(project_path)
+    File.write(screenshot_path, "screenshot")
     File.write(
       File.join(apps_root, "config.json"),
       JSON.generate(
+        build: "456",
+        contactEmail: "reviewer@example.com",
+        contactFirstName: "First",
+        contactLastName: "Last",
+        contactPhone: "+1 202 555 0100",
+        copyright: "2026 Example",
+        demoAccountName: "login",
+        demoAccountPassword: "password",
+        demoAccountRequired: true,
+        description: "Description",
+        keywords: "app",
+        marketingUrl: "https://example.com",
         name: "App",
+        notes: "Notes",
         primaryLocale: "en-US",
+        promotionalText: "Promotional text",
+        releaseType: "AFTER_APPROVAL",
+        supportUrl: "https://example.com/support",
         targets: {
           apple: {
             ios: {
@@ -91,6 +109,7 @@ module DeployTestIsolation
               platform: "IOS",
               project: project_path,
               scheme: "App",
+              screenshots: [ { displayType: "APP_IPHONE_65", path: screenshot_path } ],
               simulatorDestination: "generic/platform=iOS Simulator",
               simulatorProduct: "Debug-iphonesimulator/App.app",
               simulators: { iphone: "iPhone", ipad: "iPad" },
@@ -98,14 +117,6 @@ module DeployTestIsolation
           },
           android: {},
         },
-        version: "1.2.3",
-      ),
-    )
-    File.write(
-      File.join(apps_root, "versions", "1.2.3.json"),
-      JSON.generate(
-        description: "Description",
-        keywords: "app",
         version: "1.2.3",
         whatsNew: "Changes",
       ),

@@ -1,4 +1,5 @@
 require "fileutils"
+require "digest"
 require "json"
 require "openssl"
 require "tempfile"
@@ -11,8 +12,7 @@ module Apps
     def tmp_root = @tmp_root || File.join(Constants.local_root, "deploy", "tmp", "apps")
     def config = @config ||= read_json(File.join(root, "config.json"))
     def version = config.fetch(:version)
-    def release = @release ||= read_json(File.join(root, "versions", "#{version}.json"))
-    def build = version
+    def build = config.fetch(:build)
     def export_options_path = File.join(root, "apple", "App", "Config", "ExportOptions.plist")
 
     def targets
@@ -31,6 +31,10 @@ module Apps
 
     def project_path(target)
       File.expand_path(target.fetch(:project), Constants.local_root)
+    end
+
+    def screenshot_path(screenshot)
+      File.expand_path(screenshot.fetch(:path), Constants.local_root)
     end
 
     def private_key
@@ -61,7 +65,6 @@ module Apps
     def reset
       @private_key_file&.unlink
       @config = nil
-      @release = nil
       @targets = nil
       @private_key = nil
       @private_key_file = nil

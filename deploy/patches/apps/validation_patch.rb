@@ -18,10 +18,29 @@ module Apps
       end
 
       def validate_release
-        raise "Version metadata does not match apps/config.json" if Apps.release.fetch(:version) != Apps.version
+        %i[
+          build
+          contactEmail
+          contactFirstName
+          contactLastName
+          contactPhone
+          copyright
+          description
+          keywords
+          marketingUrl
+          notes
+          promotionalText
+          releaseType
+          supportUrl
+          whatsNew
+        ].each do |field|
+          raise "Missing #{field} in app configuration" if Apps.config[field].blank?
+        end
+        raise "Missing demoAccountRequired in app configuration" unless Apps.config.key?(:demoAccountRequired)
+        return unless Apps.config.fetch(:demoAccountRequired)
 
-        %i[description keywords whatsNew].each do |field|
-          raise "Missing #{field} in version metadata" if Apps.release[field].blank?
+        %i[demoAccountName demoAccountPassword].each do |field|
+          raise "Missing #{field} in app configuration" if Apps.config[field].blank?
         end
       end
 
@@ -30,10 +49,16 @@ module Apps
         raise "Missing #{Apps.export_options_path}" unless File.file?(Apps.export_options_path)
 
         Apps.targets.each do |target|
-          %i[archiveDestination bundleIdentifier platform project scheme].each do |field|
+          %i[archiveDestination bundleIdentifier platform project scheme screenshots].each do |field|
             raise "Missing #{field} for #{target.fetch(:name)}" if target[field].blank?
           end
           raise "Missing #{target.fetch(:project)}" unless File.directory?(Apps.project_path(target))
+          target.fetch(:screenshots).each do |screenshot|
+            %i[displayType path].each do |field|
+              raise "Missing screenshot #{field} for #{target.fetch(:name)}" if screenshot[field].blank?
+            end
+            raise "Missing #{screenshot.fetch(:path)}" unless File.file?(Apps.screenshot_path(screenshot))
+          end
         end
       end
     end

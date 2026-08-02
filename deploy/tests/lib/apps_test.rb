@@ -3,7 +3,9 @@ require_relative "../test_helper"
 class AppsTest < Minitest::Test
   def test_loads_configuration
     assert_equal "1.2.3", Apps.version
-    assert_equal "1.2.3", Apps.build
+    assert_equal "456", Apps.build
+    assert_equal "Description", Apps.config.fetch(:description)
+    assert_equal "Changes", Apps.config.fetch(:whatsNew)
     assert_equal :ios, Apps.targets.fetch(0).fetch(:name)
     assert_equal File.join(@deploy_test_dir, "artifacts", "1.2.3", "ios.xcarchive"), Apps.archive_path(Apps.targets.fetch(0))
   end

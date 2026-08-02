@@ -11,7 +11,7 @@ class AppsBuildPatchTest < Minitest::Test
     command = commands.fetch(0)
     assert_includes command, "xcodebuild archive"
     assert_includes command, "MARKETING_VERSION\\=1.2.3"
-    assert_includes command, "CURRENT_PROJECT_VERSION\\=1.2.3"
+    assert_includes command, "CURRENT_PROJECT_VERSION\\=456"
     assert_includes command, "PRODUCT_BUNDLE_IDENTIFIER\\=org.example.app"
     assert_includes command, "generic/platform\\=iOS"
     Apps.authentication_arguments.each { |argument| assert_includes command, Shellwords.escape(argument) }
