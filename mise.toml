@@ -253,6 +253,10 @@ alias = ["push"]
 depends = ["dependencies:deploy"]
 run = "set -o pipefail && set -a && source .env.production && cd deploy && ruby push.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_push.log"
 
+[tasks."deploy:publish"]
+depends = ["dependencies:deploy"]
+run = "set -o pipefail && set -a && source .env.production && cd deploy && ruby publish.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_publish.log"
+
 [tasks."deploy:patch"]
 depends = ["dependencies:deploy"]
 usage = 'arg "<name>" help="Patch to apply (e.g., nginx)"'
@@ -299,6 +303,11 @@ run = "set -o pipefail && set -a && source .env.production && cd deploy && ruby 
 alias = ["status"]
 depends = ["dependencies:deploy"]
 run = "set -a && source .env.production && cd deploy && ruby status.rb"
+
+[tasks.simulate]
+depends = ["dependencies:deploy"]
+usage = 'arg "<target>" help="Device to launch" choices "iphone" "ipad" "macos" "tv"'
+run = 'cd deploy && ruby simulate.rb "$usage_target"'
 
 #
 # Other

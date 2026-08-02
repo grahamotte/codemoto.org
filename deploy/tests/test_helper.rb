@@ -30,6 +30,12 @@ Net::SSH.define_singleton_method(:start) { |*, **| raise UnsafeTestOperation, "N
   "BACKUP_BUCKET" => "backups",
   "BACKUP_ENDPOINT" => "https://storage.example.com",
   "BACKUP_SECRET_ACCESS_KEY" => "secret",
+  "APPLE_ISSUER_ID" => "issuer",
+  "APPLE_KEY_ID" => "key",
+  "APPLE_KEY_SECRET_BASE64" => [ OpenSSL::PKey::EC.generate("prime256v1").to_pem ].pack("m0"),
+  "APPLE_TEAM_ID" => "team",
+  "CODEBERG_REPO" => "ssh://git@codeberg.org/example/app.git",
+  "CODEBERG_TOKEN" => "codeberg-token",
   "CLOUDFLARE_TOKEN" => "cloudflare-token",
   "DB_NAME" => "app",
   "DEPLOY_PASSWORD" => "password",
@@ -39,10 +45,10 @@ Net::SSH.define_singleton_method(:start) { |*, **| raise UnsafeTestOperation, "N
   "DEPLOY_USER" => "deploy",
   "DIGITAL_OCEAN_TOKEN" => "digital-ocean-token",
   "DOMAIN" => "example.com",
+  "GITHUB_REPO" => "git@github.com:example/app.git",
+  "GITHUB_TOKEN" => "github-token",
   "INSTANCE_REGION" => "test-region",
   "INSTANCE_SIZE" => "test-size",
-  "ORIGIN_REPO" => "",
-  "ORIGIN_REPO_BACKUP" => "",
   "test" => "true",
 }.each { |key, value| ENV[key] = value }
 
@@ -50,6 +56,7 @@ module DeployTestIsolation
   def before_setup
     @deploy_test_dir = Dir.mktmpdir
     $cache = Cache.new(dir: File.join(@deploy_test_dir, "cache"))
+    configure_apps_fixture
     Constants.instance_variable_set(:@ssh_key_path, File.join(@deploy_test_dir, "id_rsa"))
     Instance.clear
     Cloudflare.instance_variable_set(:@zone_id, nil)
@@ -61,7 +68,64 @@ module DeployTestIsolation
 
   def after_teardown
     FileUtils.rm_rf(@deploy_test_dir)
+    Apps.reset
     super
+  end
+
+  private
+
+  def configure_apps_fixture
+    apps_root = File.join(@deploy_test_dir, "apps")
+    project_path = File.join(apps_root, "apple", "App.xcodeproj")
+    screenshot_path = File.join(apps_root, "screenshots", "ios.jpeg")
+    FileUtils.mkdir_p(File.join(apps_root, "apple", "App", "Config"))
+    FileUtils.mkdir_p(File.dirname(screenshot_path))
+    FileUtils.mkdir_p(project_path)
+    File.write(screenshot_path, "screenshot")
+    File.write(
+      File.join(apps_root, "config.json"),
+      JSON.generate(
+        build: "456",
+        contactEmail: "reviewer@example.com",
+        contactFirstName: "First",
+        contactLastName: "Last",
+        contactPhone: "+1 202 555 0100",
+        copyright: "2026 Example",
+        demoAccountName: "login",
+        demoAccountPassword: "password",
+        demoAccountRequired: true,
+        description: "Description",
+        keywords: "app",
+        marketingUrl: "https://example.com",
+        name: "App",
+        notes: "Notes",
+        primaryLocale: "en-US",
+        promotionalText: "Promotional text",
+        releaseType: "AFTER_APPROVAL",
+        supportUrl: "https://example.com/support",
+        targets: {
+          apple: {
+            ios: {
+              archiveDestination: "generic/platform=iOS",
+              bundleIdentifier: "org.example.app",
+              platform: "IOS",
+              project: project_path,
+              scheme: "App",
+              screenshots: [ { displayType: "APP_IPHONE_65", path: screenshot_path } ],
+              simulatorDestination: "generic/platform=iOS Simulator",
+              simulatorProduct: "Debug-iphonesimulator/App.app",
+              simulators: { iphone: "iPhone", ipad: "iPad" },
+            },
+          },
+          android: {},
+        },
+        version: "1.2.3",
+        whatsNew: "Changes",
+      ),
+    )
+    File.write(File.join(apps_root, "apple", "App", "Config", "ExportOptions.plist"), "plist")
+    Apps.root = apps_root
+    Apps.tmp_root = File.join(@deploy_test_dir, "artifacts")
   end
 end
 

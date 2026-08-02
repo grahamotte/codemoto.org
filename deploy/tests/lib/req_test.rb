@@ -28,4 +28,34 @@ class ReqTest < Minitest::Test
 
     assert_equal "content", result
   end
+
+  def test_reports_api_error_details
+    stub_request(:post, "https://example.com/items")
+      .to_return(
+        status: 409,
+        body: JSON.generate(
+          errors: [
+            {
+              detail: "Resource cannot be reviewed",
+              meta: {
+                associatedErrors: [
+                  { detail: "Missing screenshot" },
+                  { title: "Missing age rating" },
+                ],
+              },
+            },
+          ],
+        ),
+      )
+
+    error = assert_raises(RuntimeError) do
+      capture_io { DeployTestMethods::REQ_CALL.call(url: "https://example.com/items", method: :post) }
+    end
+
+    assert_equal(
+      "POST https://example.com/items failed (409): Resource cannot be reviewed; Missing screenshot; Missing age rating",
+      error.message,
+    )
+    assert_nil error.cause
+  end
 end
