@@ -14,6 +14,7 @@ class AppsBuildPatchTest < Minitest::Test
     assert_includes command, "CURRENT_PROJECT_VERSION\\=1.2.3"
     assert_includes command, "PRODUCT_BUNDLE_IDENTIFIER\\=org.example.app"
     assert_includes command, "generic/platform\\=iOS"
+    Apps.authentication_arguments.each { |argument| assert_includes command, Shellwords.escape(argument) }
   end
 
   def test_skips_existing_archives

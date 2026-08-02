@@ -15,6 +15,7 @@ class AppsTest < Minitest::Test
     assert_includes arguments, ENV.fetch("APPLE_ISSUER_ID")
     assert File.file?(Apps.private_key_path)
     assert_equal 0600, File.stat(Apps.private_key_path).mode & 0777
+    assert_equal ENV.fetch("APPLE_KEY_SECRET_BASE64").unpack1("m0"), File.binread(Apps.private_key_path)
   end
 
   def test_reports_invalid_json

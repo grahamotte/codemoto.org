@@ -42,7 +42,7 @@ module Apps
 
       @private_key_file = Tempfile.new([ "app-store-connect", ".p8" ])
       @private_key_file.chmod(0600)
-      @private_key_file.write(private_key.to_pem)
+      @private_key_file.write(ENV.fetch("APPLE_KEY_SECRET_BASE64").unpack1("m0"))
       @private_key_file.close
       @private_key_file.path
     end

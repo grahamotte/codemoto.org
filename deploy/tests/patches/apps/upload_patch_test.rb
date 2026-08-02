@@ -12,6 +12,7 @@ class AppsUploadPatchTest < Minitest::Test
 
     assert_equal 1, commands.length
     assert_includes commands.fetch(0), "xcodebuild -exportArchive"
+    Apps.authentication_arguments.each { |argument| assert_includes commands.fetch(0), Shellwords.escape(argument) }
     refute Apps::UploadPatch.needed?
   end
 
