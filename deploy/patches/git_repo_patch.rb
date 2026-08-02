@@ -1,8 +1,8 @@
-class GitOriginPatch < BasePatch
+class GitRepoPatch < BasePatch
   class << self
     def always
-      push_to("origin", Constants.origin_repo)
-      push_to("origin_backup", Constants.origin_repo_backup)
+      push_to("codeberg", Constants.codeberg_repo)
+      push_to("github", Constants.github_repo)
     end
 
     private

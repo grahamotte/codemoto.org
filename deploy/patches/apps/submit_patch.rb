@@ -1,0 +1,20 @@
+module Apps
+  class SubmitPatch < BasePatch
+    class << self
+      def apply
+        client = AppStoreConnect.new
+        Apps.targets.each do |target|
+          puts "Preparing #{target.fetch(:name)} submission..."
+          status = client.submit(target, finalized: Cache.get(cache_key(target)) == "submitted")
+          Cache.set(cache_key(target), status)
+        end
+      end
+
+      private
+
+      def cache_key(target)
+        "apps/#{Apps.version}/#{target.fetch(:name)}/submission"
+      end
+    end
+  end
+end

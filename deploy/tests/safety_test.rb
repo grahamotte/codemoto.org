@@ -17,8 +17,14 @@ class SafetyTest < Minitest::Test
   end
 
   def test_patches_have_one_unit_test_file
-    sources = Dir[File.expand_path("../patches/*.rb", __dir__)].map { |path| File.basename(path, ".rb") }.sort
-    tests = Dir[File.join(__dir__, "patches/*_test.rb")].map { |path| File.basename(path, "_test.rb") }.sort
+    source_root = File.expand_path("../patches", __dir__)
+    test_root = File.join(__dir__, "patches")
+    sources = Dir[File.join(source_root, "**/*.rb")]
+      .map { |path| path.delete_prefix("#{source_root}/").delete_suffix(".rb") }
+      .sort
+    tests = Dir[File.join(test_root, "**/*_test.rb")]
+      .map { |path| path.delete_prefix("#{test_root}/").delete_suffix("_test.rb") }
+      .sort
 
     assert_equal sources, tests
   end
