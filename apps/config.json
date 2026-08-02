@@ -1,0 +1,47 @@
+{
+  "name": "App",
+  "primaryLocale": "en-US",
+  "targets": {
+    "apple": {
+      "ios": {
+        "archiveDestination": "generic/platform=iOS",
+        "bundleIdentifier": "com.grahamotte.codemoto",
+        "platform": "IOS",
+        "project": "apps/apple/App.xcodeproj",
+        "scheme": "App",
+        "simulatorDestination": "generic/platform=iOS Simulator",
+        "simulatorProduct": "Debug-iphonesimulator/App.app",
+        "simulators": {
+          "ipad": "iPad",
+          "iphone": "iPhone"
+        }
+      },
+      "macos": {
+        "archiveDestination": "generic/platform=macOS",
+        "bundleIdentifier": "com.grahamotte.codemoto",
+        "platform": "MAC_OS",
+        "project": "apps/apple/App.xcodeproj",
+        "scheme": "App-macOS",
+        "simulatorDestination": "platform=macOS",
+        "simulatorProduct": "Debug/App-macOS.app",
+        "simulators": {
+          "macos": "Mac"
+        }
+      },
+      "tvos": {
+        "archiveDestination": "generic/platform=tvOS",
+        "bundleIdentifier": "com.grahamotte.codemoto",
+        "platform": "TV_OS",
+        "project": "apps/apple/App.xcodeproj",
+        "scheme": "App-tvOS",
+        "simulatorDestination": "generic/platform=tvOS Simulator",
+        "simulatorProduct": "Debug-appletvsimulator/App-tvOS.app",
+        "simulators": {
+          "tv": "Apple TV"
+        }
+      }
+    },
+    "android": {}
+  },
+  "version": "0.1.0"
+}
