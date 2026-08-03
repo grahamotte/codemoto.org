@@ -8,6 +8,8 @@ class Cmd
 
       res = `#{command}`
       puts res
+      raise "Command failed: #{command}" unless command_succeeded?
+
       res
     end
 
@@ -50,6 +52,12 @@ class Cmd
       ssh("#{bash} -c 'cat ? > ?'", tmp_remote_path, path, user:)
       ssh("rm #{tmp_remote_path}", user:)
       Cache.set(path, content)
+    end
+
+    private
+
+    def command_succeeded?
+      Process.last_status.blank? || Process.last_status.success?
     end
   end
 end

@@ -10,4 +10,13 @@ class CmdTest < Minitest::Test
     assert_equal "hello world\n", result
     assert_includes output, "CMD echo hello\\ world"
   end
+
+  def test_local_raises_when_command_fails
+    Cmd.expects(:`).with("false").returns("")
+    Cmd.stubs(:command_succeeded?).returns(false)
+
+    error = assert_raises(RuntimeError) { DeployTestMethods::CMD_LOCAL.call("false") }
+
+    assert_equal "Command failed: false", error.message
+  end
 end

@@ -215,6 +215,9 @@ run = "cd backend && rails test"
 depends = ["dependencies:deploy"]
 run = 'cd deploy && bundle exec ruby -Itests -e "Dir.glob(\"tests/**/*_test.rb\").each { |f| require_relative f }"'
 
+[tasks."test:apps"]
+run = 'cd apps/apple && cp Tests/Package.swift Package.swift && trap "rm Package.swift" EXIT && swift test --quiet --scratch-path ../../deploy/tmp/apps/swift-tests'
+
 [tasks.tsc]
 depends = ["dependencies:frontend"]
 run = "cd frontend && pnpm exec tsc"
@@ -252,6 +255,11 @@ run = "set -o pipefail && set -a && source .env.production && cd deploy && ruby 
 alias = ["push"]
 depends = ["dependencies:deploy"]
 run = "set -o pipefail && set -a && source .env.production && cd deploy && ruby push.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_push.log"
+
+[tasks."deploy:publish"]
+alias = ["publish"]
+depends = ["dependencies:deploy"]
+run = "set -o pipefail && set -a && source .env.production && cd deploy && ruby publish.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_publish.log"
 
 [tasks."deploy:patch"]
 depends = ["dependencies:deploy"]
@@ -300,6 +308,11 @@ alias = ["status"]
 depends = ["dependencies:deploy"]
 run = "set -a && source .env.production && cd deploy && ruby status.rb"
 
+[tasks."deploy:set-version"]
+depends = ["dependencies:deploy"]
+usage = 'arg "<version>" help="Semantic version (e.g., 1.1.1)"'
+run = 'cd deploy && ruby set_version.rb "$usage_version"'
+
 #
 # Other
 #
@@ -313,6 +326,11 @@ run = [
   "git checkout master",
   "git rebase upstream/master",
 ]
+
+[tasks.simulate]
+depends = ["dependencies:deploy"]
+usage = 'arg "<target>" help="Device to launch" choices "iphone" "ipad" "macos" "tv"'
+run = 'cd deploy && ruby simulate.rb "$usage_target"'
 
 #
 # Application
