@@ -1,5 +1,5 @@
 {
-  "build": "0.1.4",
+  "build": "0.1.5",
   "contactEmail": "go@graham.lol",
   "contactFirstName": "Graham",
   "contactLastName": "Otte",
@@ -81,6 +81,6 @@
     },
     "android": {}
   },
-  "version": "0.1.4",
+  "version": "0.1.5",
   "whatsNew": "Bug fixes."
 }
