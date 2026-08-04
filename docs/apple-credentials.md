@@ -14,6 +14,8 @@
 | `APPLE_DEVELOPMENT_CERTIFICATE_PASSWORD` | Password for the Apple Development `.p12`. | Rotate with that `.p12`. |
 | `APPLE_DISTRIBUTION_CERTIFICATE_BASE64` | Base64-encoded Apple Distribution identity used for App Store exports and uploads. | Before expiry or after private-key compromise. |
 | `APPLE_DISTRIBUTION_CERTIFICATE_PASSWORD` | Password for the Apple Distribution `.p12`. | Rotate with that `.p12`. |
+| `APPLE_MAC_INSTALLER_DISTRIBUTION_CERTIFICATE_BASE64` | Base64-encoded Mac Installer Distribution identity used to package Mac App Store uploads. | Before expiry or after private-key compromise. |
+| `APPLE_MAC_INSTALLER_DISTRIBUTION_CERTIFICATE_PASSWORD` | Password for the Mac Installer Distribution `.p12`. | Rotate with that `.p12`. |
 | `APPLE_DEVELOPER_ID_CERTIFICATE_BASE64` | Base64-encoded Developer ID Application identity used for the standalone macOS release. | Before expiry or after private-key compromise. |
 | `APPLE_DEVELOPER_ID_CERTIFICATE_PASSWORD` | Password for the Developer ID Application `.p12`. | Rotate with that `.p12`. |
 
@@ -32,6 +34,7 @@ As of August 2, 2026:
 | --- | --- |
 | Apple Development: Created via API | August 3, 2027 |
 | Apple Distribution: GRAHAM ALLAN OTTE (`3QCHM255VF`) | June 4, 2027 |
+| 3rd Party Mac Developer Installer: GRAHAM ALLAN OTTE (`3QCHM255VF`) | June 4, 2027 |
 | Developer ID Application: GRAHAM ALLAN OTTE (`3QCHM255VF`) | February 1, 2027 |
 
 Review these dates at least quarterly. Replace a credential before its expiry rather than during a release.
@@ -114,6 +117,8 @@ bundle exec ruby -e 'require_relative "lib/require"; Apps.with_signing_certifica
 
 bundle exec ruby -e 'require_relative "lib/require"; Apps.with_signing_certificate("Apple Distribution", "APPLE_DISTRIBUTION") { puts "Apple Distribution identity is valid" }'
 
+bundle exec ruby -e 'require_relative "lib/require"; Apps.with_signing_certificates([["Mac Developer Installer", "APPLE_MAC_INSTALLER_DISTRIBUTION", nil]]) { puts "Mac Installer Distribution identity is valid" }'
+
 bundle exec ruby -e 'require_relative "lib/require"; Apps.with_signing_certificate("Developer ID Application", "APPLE_DEVELOPER_ID") { puts "Developer ID identity is valid" }'
 ```
 
@@ -130,6 +135,10 @@ Create an **Apple Distribution** certificate. Revoking it invalidates profiles t
 ### Developer ID Application
 
 Create a **Developer ID Application** certificate. Do not revoke an old Developer ID certificate as routine cleanup: revocation can prevent users from installing apps signed with it. Apple normally requires contacting Developer Program Support to revoke one. Allow an uncompromised old certificate to expire after the replacement is proven.
+
+### Mac Installer Distribution
+
+Create a **Mac Installer Distribution** certificate. Apple requires it in addition to Apple Distribution when Xcode packages a Mac App Store upload.
 
 ## Rollback and troubleshooting
 

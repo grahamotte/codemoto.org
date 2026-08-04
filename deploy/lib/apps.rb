@@ -77,38 +77,47 @@ module Apps
     end
 
     def with_signing_certificate(name, prefix)
+      with_signing_certificates([ [ name, prefix, "codesigning" ] ]) { |keychain| yield keychain }
+    end
+
+    def with_signing_certificates(certificates)
       keychain = File.join(tmp_root, "signing-#{Process.pid}.keychain-db")
       roots = "/System/Library/Keychains/SystemRootCertificates.keychain"
-      password = "#{prefix}_CERTIFICATE_PASSWORD"
       previous = Cmd.local("security list-keychains -d user").scan(/\"([^\"]+)\"/).flatten
       default = Cmd.local("security default-keychain -d user").scan(/\"([^\"]+)\"/).flatten.first
       FileUtils.mkdir_p(tmp_root)
-      Tempfile.create([ "signing", ".p12" ]) do |certificate|
-        certificate.binmode
-        certificate.write(ENV.fetch("#{prefix}_CERTIFICATE_BASE64").unpack1("m0"))
-        certificate.close
-        Tempfile.create([ "signing", ".pem" ]) do |pem|
-          Tempfile.create([ "signing-modern", ".p12" ]) do |modern|
-            Cmd.local("/usr/bin/openssl pkcs12 -in #{Shellwords.escape(certificate.path)} -passin env:#{password} -nodes -out #{Shellwords.escape(pem.path)}")
-            Cmd.local("/usr/bin/openssl pkcs12 -export -in #{Shellwords.escape(pem.path)} -out #{Shellwords.escape(modern.path)} -passout env:#{password}")
-            FileUtils.rm_f(keychain)
-            Cmd.local("security create-keychain -p \"$#{password}\" #{Shellwords.escape(keychain)}")
-            Cmd.local("security unlock-keychain -p \"$#{password}\" #{Shellwords.escape(keychain)}")
-            Cmd.local(Shellwords.join([ "security", "default-keychain", "-d", "user", "-s", keychain ]))
-            Cmd.local(Shellwords.join([ "security", "list-keychains", "-d", "user", "-s", keychain, roots ]))
-            Cmd.local(Shellwords.join([ "security", "import", File.join(__dir__, "apps", "apple_certificate_authorities.pem"), "-k", keychain, "-f", "pemseq" ]))
-            Cmd.local("security import #{Shellwords.escape(modern.path)} -k #{Shellwords.escape(keychain)} -f pkcs12 -P \"$#{password}\" -T /usr/bin/codesign -T /usr/bin/security")
-            Cmd.local("security set-key-partition-list -S apple-tool:,apple: -s -k \"$#{password}\" #{Shellwords.escape(keychain)}")
-            identities = Cmd.local(Shellwords.join([ "security", "find-identity", "-v", "-p", "codesigning", keychain ]))
-            raise "Missing #{name} identity" unless identities.include?(name)
-            yield keychain
+      password = "#{certificates.first.fetch(1)}_CERTIFICATE_PASSWORD"
+      FileUtils.rm_f(keychain)
+      Cmd.local("security create-keychain -p \"$#{password}\" #{Shellwords.escape(keychain)}")
+      Cmd.local("security unlock-keychain -p \"$#{password}\" #{Shellwords.escape(keychain)}")
+      Cmd.local(Shellwords.join([ "security", "default-keychain", "-d", "user", "-s", keychain ]))
+      Cmd.local(Shellwords.join([ "security", "list-keychains", "-d", "user", "-s", keychain, roots ]))
+      Cmd.local(Shellwords.join([ "security", "import", File.join(__dir__, "apps", "apple_certificate_authorities.pem"), "-k", keychain, "-f", "pemseq" ]))
+      certificates.each do |name, prefix, policy|
+        certificate_password = "#{prefix}_CERTIFICATE_PASSWORD"
+        Tempfile.create([ "signing", ".p12" ]) do |certificate|
+          certificate.binmode
+          certificate.write(ENV.fetch("#{prefix}_CERTIFICATE_BASE64").unpack1("m0"))
+          certificate.close
+          Tempfile.create([ "signing", ".pem" ]) do |pem|
+            Tempfile.create([ "signing-modern", ".p12" ]) do |modern|
+              Cmd.local("/usr/bin/openssl pkcs12 -in #{Shellwords.escape(certificate.path)} -passin env:#{certificate_password} -nodes -out #{Shellwords.escape(pem.path)}")
+              Cmd.local("/usr/bin/openssl pkcs12 -export -in #{Shellwords.escape(pem.path)} -out #{Shellwords.escape(modern.path)} -passout env:#{certificate_password}")
+              Cmd.local("security import #{Shellwords.escape(modern.path)} -k #{Shellwords.escape(keychain)} -f pkcs12 -P \"$#{certificate_password}\" -T /usr/bin/codesign -T /usr/bin/security -T /usr/bin/productbuild")
+              arguments = [ "security", "find-identity", "-v" ]
+              arguments.concat([ "-p", policy ]) if policy.present?
+              identities = Cmd.local(Shellwords.join([ *arguments, keychain ]))
+              raise "Missing #{name} identity" unless identities.include?(name)
+            end
           end
         end
-      ensure
-        Cmd.local(Shellwords.join([ "security", "default-keychain", "-d", "user", "-s", default ])) if default.present?
-        Cmd.local(Shellwords.join([ "security", "list-keychains", "-d", "user", "-s", *previous ])) if previous.present?
-        Cmd.local(Shellwords.join([ "security", "delete-keychain", keychain ])) rescue StandardError
       end
+      Cmd.local("security set-key-partition-list -S apple-tool:,apple: -s -k \"$#{password}\" #{Shellwords.escape(keychain)}")
+      yield keychain
+    ensure
+      Cmd.local(Shellwords.join([ "security", "default-keychain", "-d", "user", "-s", default ])) if default.present?
+      Cmd.local(Shellwords.join([ "security", "list-keychains", "-d", "user", "-s", *previous ])) if previous.present?
+      Cmd.local(Shellwords.join([ "security", "delete-keychain", keychain ])) rescue StandardError
     end
 
     def reset

@@ -13,7 +13,9 @@ module Apps
 
           puts "Uploading #{target.fetch(:name)}..."
           FileUtils.rm_rf(Apps.export_path(target))
-          Apps.with_signing_certificate("Apple Distribution", "APPLE_DISTRIBUTION") do |keychain|
+          certificates = [ [ "Apple Distribution", "APPLE_DISTRIBUTION", "codesigning" ] ]
+          certificates << [ "Mac Developer Installer", "APPLE_MAC_INSTALLER_DISTRIBUTION", nil ] if target.fetch(:platform) == "MAC_OS"
+          Apps.with_signing_certificates(certificates) do |keychain|
             Cmd.local(Shellwords.join([
               "xcodebuild",
               "-exportArchive",

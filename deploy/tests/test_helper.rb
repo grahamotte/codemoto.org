@@ -58,6 +58,8 @@ Net::SSH.define_singleton_method(:start) { |*, **| raise UnsafeTestOperation, "N
   "APPLE_DISTRIBUTION_CERTIFICATE_PASSWORD" => developer_id_password,
   "APPLE_KEY_ID" => "key",
   "APPLE_KEY_SECRET_BASE64" => [ OpenSSL::PKey::EC.generate("prime256v1").to_pem ].pack("m0"),
+  "APPLE_MAC_INSTALLER_DISTRIBUTION_CERTIFICATE_BASE64" => [ developer_id_pkcs12.to_der ].pack("m0"),
+  "APPLE_MAC_INSTALLER_DISTRIBUTION_CERTIFICATE_PASSWORD" => developer_id_password,
   "APPLE_TEAM_ID" => "team",
   "CODEBERG_REPO" => "ssh://git@codeberg.org/example/app.git",
   "CODEBERG_TOKEN" => "codeberg-token",
