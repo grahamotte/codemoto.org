@@ -157,6 +157,15 @@ class AppsAppStoreConnectTest < Minitest::Test
     assert_equal "version", version.fetch(:id)
   end
 
+  def test_treats_a_missing_canceled_submission_as_complete
+    error = Req::ResponseError.new("Submission cannot be found", status: 404)
+    expect_request(:get, "/v1/reviewSubmissions/submission").raises(error)
+
+    result = Apps::AppStoreConnect.new.send(:wait_for_submission_cancellation, "submission")
+
+    assert_nil result
+  end
+
   def test_sends_whats_new_for_subsequent_versions
     client = Apps::AppStoreConnect.new
     target = Apps.targets.fetch(0)
@@ -326,7 +335,7 @@ class AppsAppStoreConnectTest < Minitest::Test
     assert_equal "occupied", submission.fetch(:id)
   end
 
-  def test_detaches_version_from_stale_submission
+  def test_ignores_a_missing_item_while_detaching_version_from_stale_submission
     expect_request(:get, "/v1/apps/app/reviewSubmissions").returns(
       data: [
         { id: "stale", attributes: { state: "CANCELED" } },
@@ -342,7 +351,8 @@ class AppsAppStoreConnectTest < Minitest::Test
       ],
     )
     expect_request(:get, "/v1/reviewSubmissions/draft/items").returns(data: [])
-    expect_request(:delete, "/v1/reviewSubmissionItems/stale-item").returns({})
+    error = Req::ResponseError.new("Submission item cannot be found", status: 404)
+    expect_request(:delete, "/v1/reviewSubmissionItems/stale-item").raises(error)
     expect_request(:post, "/v1/reviewSubmissionItems").returns({})
 
     submission = Apps::AppStoreConnect.new.send(:prepare_submission, "app", "version", "IOS")

@@ -5,7 +5,7 @@ module Apps
         client = AppStoreConnect.new
         Apps.targets.each do |target|
           puts "Preparing #{target.fetch(:name)} submission..."
-          status = client.submit(target, finalized: Cache.get(cache_key(target)) == "submitted")
+          status = client.submit(target)
           Cache.set(cache_key(target), status)
         end
       end

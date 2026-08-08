@@ -48,10 +48,11 @@ class ReqTest < Minitest::Test
         ),
       )
 
-    error = assert_raises(RuntimeError) do
+    error = assert_raises(Req::ResponseError) do
       capture_io { DeployTestMethods::REQ_CALL.call(url: "https://example.com/items", method: :post) }
     end
 
+    assert_equal 409, error.status
     assert_equal(
       "POST https://example.com/items failed (409): Resource cannot be reviewed; Missing screenshot; Missing age rating",
       error.message,

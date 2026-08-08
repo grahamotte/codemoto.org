@@ -1,4 +1,13 @@
 class Req
+  class ResponseError < RuntimeError
+    attr_reader :status
+
+    def initialize(message, status:)
+      @status = status
+      super(message)
+    end
+  end
+
   class << self
     def call(
       url:,
@@ -33,9 +42,10 @@ class Req
       details = error_details(error)
       raise error if details.blank?
 
-      raise RuntimeError,
+      raise ResponseError.new(
         "#{method.to_s.upcase} #{url} failed (#{error.response[:status]}): #{details}",
-        cause: nil
+        status: error.response[:status],
+      ), cause: nil
     end
 
     private

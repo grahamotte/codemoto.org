@@ -28,7 +28,7 @@ module Apps
       @wait = wait
     end
 
-    def submit(target, finalized: false)
+    def submit(target)
       apps = get("/v1/apps", params: { "filter[bundleId]" => target.fetch(:bundleIdentifier) }).fetch(:data)
       raise "Expected one App Store app for #{target.fetch(:bundleIdentifier)}" unless apps.length == 1
 
@@ -44,7 +44,6 @@ module Apps
         "/v1/appStoreVersions/#{version.fetch(:id)}/relationships/build",
         data: { type: "builds", id: build.fetch(:id) },
       )
-      return :submitted if finalized
 
       submission = prepare_submission(app.fetch(:id), version.fetch(:id), target.fetch(:platform))
       if target.fetch(:bundleIdentifier).include?("codemoto")
@@ -108,6 +107,10 @@ module Apps
 
         @wait.call
       end
+    rescue Req::ResponseError => error
+      return if error.status == 404
+
+      raise
     end
 
     def create_version(app_id, target)
@@ -374,7 +377,7 @@ module Apps
           next if related.blank?
           next unless related.fetch(:id) == version_id || submission.fetch(:id) == draft&.fetch(:id)
 
-          delete("/v1/reviewSubmissionItems/#{item.fetch(:id)}")
+          delete_if_present("/v1/reviewSubmissionItems/#{item.fetch(:id)}")
         end
       end
       return add_submission_item(draft, version_id) if draft.present?
@@ -428,6 +431,14 @@ module Apps
 
     def delete(path)
       request(path, method: :delete)
+    end
+
+    def delete_if_present(path)
+      delete(path)
+    rescue Req::ResponseError => error
+      return if error.status == 404
+
+      raise
     end
 
     def request(path, method: :get, params: {}, payload: {})

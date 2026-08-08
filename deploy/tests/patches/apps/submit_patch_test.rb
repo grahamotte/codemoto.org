@@ -1,9 +1,9 @@
 require_relative "../../test_helper"
 
 class AppsSubmitPatchTest < Minitest::Test
-  def test_updates_metadata_every_time_and_submits_once
-    stub_submission_requests(finalize: true)
-    stub_submission_requests(finalize: false)
+  def test_updates_metadata_and_submission_every_time
+    stub_submission_requests
+    stub_submission_requests
 
     Apps::SubmitPatch.apply
     Apps::SubmitPatch.apply
@@ -12,13 +12,49 @@ class AppsSubmitPatchTest < Minitest::Test
     assert_equal "submitted", Cache.get("apps/1.2.3/ios/submission")
   end
 
+  def test_resubmits_after_canceling_an_active_submission
+    Cache.set("apps/1.2.3/ios/submission", "submitted")
+    stub_submission_requests(active: true)
+
+    Apps::SubmitPatch.apply
+
+    assert_equal "submitted", Cache.get("apps/1.2.3/ios/submission")
+  end
+
   private
 
-  def stub_submission_requests(finalize:)
+  def stub_submission_requests(active: false)
     expect_request(:get, "/v1/apps").returns(data: [ { id: "app" } ])
-    expect_request(:get, "/v1/apps/app/appStoreVersions").returns(
-      data: [ { id: "version", attributes: { versionString: "1.2.3" } } ],
-    )
+    if active
+      expect_request(:get, "/v1/apps/app/appStoreVersions").twice.returns(
+        data: [
+          {
+            id: "version",
+            attributes: { appVersionState: "WAITING_FOR_REVIEW", versionString: "1.2.3" },
+          },
+        ],
+      ).then.returns(
+        data: [
+          {
+            id: "version",
+            attributes: { appVersionState: "DEVELOPER_REJECTED", versionString: "1.2.3" },
+          },
+        ],
+      )
+      expect_request(:get, "/v1/apps/app/reviewSubmissions").twice.returns(
+        data: [ { id: "active", attributes: { state: "WAITING_FOR_REVIEW" } } ],
+      ).then.returns(
+        data: [ { id: "submission", attributes: { state: "READY_FOR_REVIEW" } } ],
+      )
+      expect_request(:patch, "/v1/reviewSubmissions/active").returns({})
+      expect_request(:get, "/v1/reviewSubmissions/active").returns(
+        data: { attributes: { state: "CANCELED" } },
+      )
+    else
+      expect_request(:get, "/v1/apps/app/appStoreVersions").returns(
+        data: [ { id: "version", attributes: { versionString: "1.2.3" } } ],
+      )
+    end
     expect_request(:patch, "/v1/appStoreVersions/version").returns({})
     expect_request(:get, "/v1/appStoreVersions/version/appStoreVersionLocalizations").returns(
       data: [ { id: "localization", attributes: { locale: "en-US" } } ],
@@ -49,11 +85,12 @@ class AppsSubmitPatchTest < Minitest::Test
       included: [ { id: "build", attributes: { processingState: "VALID" } } ],
     )
     expect_request(:patch, "/v1/appStoreVersions/version/relationships/build").returns({})
-    return unless finalize
 
-    expect_request(:get, "/v1/apps/app/reviewSubmissions").returns(
-      data: [ { id: "submission", attributes: { state: "READY_FOR_REVIEW" } } ],
-    )
+    unless active
+      expect_request(:get, "/v1/apps/app/reviewSubmissions").returns(
+        data: [ { id: "submission", attributes: { state: "READY_FOR_REVIEW" } } ],
+      )
+    end
     expect_request(:get, "/v1/reviewSubmissions/submission/items").returns(data: [])
     expect_request(:post, "/v1/reviewSubmissionItems").returns({})
     expect_request(:patch, "/v1/reviewSubmissions/submission").returns({})
