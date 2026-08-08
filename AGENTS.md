@@ -1,49 +1,62 @@
-# Rules
+# AGENTS.md
 
-**THESE ARE VERY IMPORTANT RULES FOR THIS PROJECT. REMEMBER AND OBEY THEM OR SOMEONE WILL GET FIRED AND WONT BE ABLE TO FEED THEIR CHILDREN ANYMORE.**
+## Code Moto
 
-## General
+This repo is based on Code Moto. Code Moto is a basis/template repository that provides tools and patterns for downstream repositories. From a downstream repository, the basis repository is typically available at `../codemoto.org`. If the current repository is named `codemoto.org`, changes affect the Code Moto framework itself.
 
-- This repository is a batteries-included web app setup with a Rails API, React frontend, deployment tooling, shared Ruby gems, and reusable patterns baked in. Keep its structure simple, robust, and thoroughly tested.
-- Every time you're done making a change, run the WHOLE test suite, not just the ones relevant to the change you made. You can run the whole test suite easily by running `mise test`
-- DO NOT try to run the app or the dev server or anything like that.
+Repositories based on Code Moto may omit components or add their own. Backport broadly useful tools and changes to `codemoto.org` when practical.
+
+The "Repo Specific" section blow contains rules specific to this repo only.
+
+## Project Rules
+
+1. Do not introduce bugs or regressions.
+2. Before writing code, find analogous code in the repository and follow its established patterns.
+3. Do not add comments to code. Preserve existing comments unless they are incorrect or obsolete.
+4. Lint, type-check, and test code changes using the tasks defined in the root `mise.toml`.
+5. Use root `mise` tasks instead of invoking underlying tools directly when an applicable task exists.
+6. Do not create a canvas or visualization unless the user specifically requests one.
+
+## Ruby
+
+- Use `.blank?` and `.present?` for presence checks instead of `.empty?`, `.nil?`, or truthiness checks.
+- Do not use `sleep`; use an event- or state-based approach instead.
+- Add trailing commas to multiline argument lists and collections.
+
+## TypeScript
+
+- Treat nullable values as both `null` and `undefined`; use `nullish()` in Zod schemas and check for both states.
+- Use `pnpm`, not `npm`.
+- Use `mise tsc` to type-check.
+- Prefer Lodash utilities over custom equivalents when Lodash is already available.
+- Use shadcn/ui components.
+- Use Tailwind CSS for styling.
 
 ## Testing
 
 - Never run network requests, system commands, or application sleeps in tests. Stub those boundaries every time.
+- Do not stub other units in a unit test. Only stub network requests, system commands, and sleeps so the real local collaborators and full local surface are exercised together.
 - Every business-logic file must have one corresponding unit test file. Source and test files are 1:1.
 - Test each business-logic unit thoroughly. Configuration, generated files, framework shells, and other files without business logic do not need tests.
+- After every code change, run the whole suite with `mise test`.
 - Do not write integration tests.
-- Do not stub other units in a unit test. Only stub network requests, system commands, and sleeps so the real local collaborators and full local surface are exercised together.
-- After every change, run the whole suite with `mise test`.
 
-## Overall Rules
+## File Structure
 
-When the user says "remember this" or similar, do this:
+- `.agents/skills/` - Project-specific agent skills.
+- `.env.*` - Environment configuration and secrets. Do not expose secret values.
+- `apps/` - Mobile apps for iOS and Android.
+- `apps/config.json` - Mobile app release configuration.
+- `assets/` - Shared images and media.
+- `backend/` - Ruby on Rails API server.
+- `deploy/` - Backend, frontend, and mobile app deployment tooling.
+- `docs/` - Project documentation in Markdown.
+- `frontend/` - React website.
+- `frontend/subdomains.json` - Website subdomain configuration.
+- `gems/` - Shared Ruby gems.
+- `scripts/` - General-purpose scripts.
+- `mise.toml` - Project tooling and task definitions.
 
-- Review the current chat conversation in its entirety.
-- Review the introspection document located at <project_root>/.cursor/rules/introspection.mdc
-- Update this file with any significant learnings from the conversation.
-- Remember, this file is for general structural notes about the system, getting too specific will muddle the usefulness of the document.
-- Also, remember, these notes are for you in the future, so orient them as such.
+## Repo Specific
 
-## Ruby
-
-- Do not add comments to the code
-- Run specific test with `mise exec -- bundle exec ruby -I test <file>`
-- Do not use .empty?, .nil?, if obj, etc - use .blank? or .present? always
-- NEVER use `sleep`, you are doing something wrong if you sleep
-- Always test your code unless explicitly told not to
-- Always use double quotes for strings
-- Always add a trailing comma in multiline lists of arguments
-
-## Typescript
-
-- Whenever something is null it's null | undefined, in zod terms it's nullish, NEVER type or check just null or just undefined, always both.
-- Do not add comments to the code
-- Test TypeScript business logic with its corresponding unit test file
-- Use `pnpm`, not npm
-- Use `mise tsc` to typecheck -- DO NOT TYPE CHECK ANY OTHER WAY!
-- Use lodash when possible
-- Use ShadCN components, ask for them to be installed if they dont exist
-- Use tailwind for styles
+None.

@@ -38,6 +38,7 @@ public/compiled
 frontend/dist
 .env
 .env.production
+.env.development
 .ruby-lsp
 /*/tmp
 /*/tmp/*

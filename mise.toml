@@ -6,7 +6,7 @@ python = "3.14.6"
 deno = "2.9.4"
 
 [env]
-_.file = '.env'
+_.file = '.env.development'
 
 #
 # Dependencies
