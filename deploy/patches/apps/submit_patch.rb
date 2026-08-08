@@ -1,6 +1,8 @@
 module Apps
   class SubmitPatch < BasePatch
     class << self
+      def needed? = !Apps.skip_app_stores?
+
       def apply
         client = AppStoreConnect.new
         Apps.targets.each do |target|

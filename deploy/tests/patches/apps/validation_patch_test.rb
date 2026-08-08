@@ -27,6 +27,15 @@ class AppsValidationPatchTest < Minitest::Test
     assert_equal "Missing description in app configuration", error.message
   end
 
+  def test_rejects_invalid_skip_app_stores
+    Apps.config[:skip_app_stores] = "true"
+    Cmd.expects(:local).with("xcodebuild -version").returns("Xcode")
+
+    error = assert_raises(RuntimeError) { Apps::ValidationPatch.apply }
+
+    assert_equal "skip_app_stores must be true or false in app configuration", error.message
+  end
+
   def test_requires_demo_credentials_when_sign_in_is_required
     Apps.config[:demoAccountName] = ""
     Cmd.expects(:local).with("xcodebuild -version").returns("Xcode")
@@ -34,5 +43,34 @@ class AppsValidationPatchTest < Minitest::Test
     error = assert_raises(RuntimeError) { Apps::ValidationPatch.apply }
 
     assert_equal "Missing demoAccountName in app configuration", error.message
+  end
+
+  def test_skips_app_store_validation_for_repository_releases
+    Apps.config[:skip_app_stores] = true
+    Apps.config[:description] = ""
+    Apps.config[:demoAccountRequired] = nil
+    Apps.targets.fetch(0)[:platform] = "MAC_OS"
+    Apps.targets.fetch(0).delete(:screenshots)
+    FileUtils.rm_f(Apps.export_options_path)
+    values = %w[
+      APPLE_DISTRIBUTION_CERTIFICATE_BASE64
+      APPLE_DISTRIBUTION_CERTIFICATE_PASSWORD
+      APPLE_MAC_INSTALLER_DISTRIBUTION_CERTIFICATE_BASE64
+      APPLE_MAC_INSTALLER_DISTRIBUTION_CERTIFICATE_PASSWORD
+    ].to_h { |name| [ name, ENV.delete(name) ] }
+    Cmd.expects(:local).with("xcodebuild -version").returns("Xcode")
+
+    Apps::ValidationPatch.apply
+  ensure
+    values&.each { |name, value| ENV[name] = value }
+  end
+
+  def test_requires_macos_target_for_repository_releases
+    Apps.config[:skip_app_stores] = true
+    Cmd.expects(:local).with("xcodebuild -version").returns("Xcode")
+
+    error = assert_raises(RuntimeError) { Apps::ValidationPatch.apply }
+
+    assert_equal "Missing macOS target for repository release", error.message
   end
 end

@@ -6,6 +6,7 @@ class AppsTest < Minitest::Test
     assert_equal "456", Apps.build
     assert_equal "Description", Apps.config.fetch(:description)
     assert_equal "Changes", Apps.config.fetch(:whatsNew)
+    refute Apps.skip_app_stores?
     assert_equal :ios, Apps.targets.fetch(0).fetch(:name)
     assert_equal File.join(@deploy_test_dir, "artifacts", "1.2.3", "ios.xcarchive"), Apps.archive_path(Apps.targets.fetch(0))
     Apps.config[:name] = "Example App"
@@ -13,6 +14,12 @@ class AppsTest < Minitest::Test
     assert_equal "codeberg.org", Apps.revision_repositories.fetch(0).fetch(:host)
     assert_equal "github.com", Apps.revision_repositories.fetch(1).fetch(:host)
     assert_equal "app", Apps.revision_repositories.fetch(1).fetch(:name)
+  end
+
+  def test_loads_skip_app_stores
+    Apps.config[:skip_app_stores] = true
+
+    assert Apps.skip_app_stores?
   end
 
   def test_builds_authentication_arguments

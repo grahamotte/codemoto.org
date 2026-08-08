@@ -1,6 +1,13 @@
 require_relative "../../test_helper"
 
 class AppsUploadPatchTest < Minitest::Test
+  def test_skips_app_store_uploads
+    Apps.config[:skip_app_stores] = true
+
+    refute Apps::UploadPatch.needed?
+    Apps::UploadPatch.call
+  end
+
   def test_uploads_archives_once
     target = Apps.targets.fetch(0)
     FileUtils.mkdir_p(Apps.archive_path(target))

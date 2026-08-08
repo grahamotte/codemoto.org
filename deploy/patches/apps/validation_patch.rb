@@ -12,49 +12,65 @@ module Apps
       private
 
       def validate_environment
-        %w[
+        required = %w[
           APPLE_ISSUER_ID
           APPLE_DEVELOPMENT_CERTIFICATE_BASE64
           APPLE_DEVELOPMENT_CERTIFICATE_PASSWORD
           APPLE_DEVELOPER_ID_CERTIFICATE_BASE64
           APPLE_DEVELOPER_ID_CERTIFICATE_PASSWORD
-          APPLE_DISTRIBUTION_CERTIFICATE_BASE64
-          APPLE_DISTRIBUTION_CERTIFICATE_PASSWORD
           APPLE_KEY_ID
           APPLE_KEY_SECRET_BASE64
-          APPLE_MAC_INSTALLER_DISTRIBUTION_CERTIFICATE_BASE64
-          APPLE_MAC_INSTALLER_DISTRIBUTION_CERTIFICATE_PASSWORD
           APPLE_TEAM_ID
           CODEBERG_REPO
           CODEBERG_TOKEN
           GITHUB_REPO
           GITHUB_TOKEN
-        ].each do |name|
+        ]
+        unless Apps.skip_app_stores?
+          required.concat(%w[
+            APPLE_DISTRIBUTION_CERTIFICATE_BASE64
+            APPLE_DISTRIBUTION_CERTIFICATE_PASSWORD
+            APPLE_MAC_INSTALLER_DISTRIBUTION_CERTIFICATE_BASE64
+            APPLE_MAC_INSTALLER_DISTRIBUTION_CERTIFICATE_PASSWORD
+          ])
+        end
+        required.each do |name|
           raise "Missing #{name}" if ENV[name].blank?
         end
         Apps.revision_repositories
       end
 
       def validate_release
-        %i[
+        unless [ true, false ].include?(Apps.config.fetch(:skip_app_stores, false))
+          raise "skip_app_stores must be true or false in app configuration"
+        end
+
+        required = %i[
           build
-          contactEmail
-          contactFirstName
-          contactLastName
-          contactPhone
-          copyright
-          description
-          keywords
-          marketingUrl
           name
-          notes
-          promotionalText
-          releaseType
-          supportUrl
           whatsNew
-        ].each do |field|
+        ]
+        unless Apps.skip_app_stores?
+          required.concat(%i[
+            contactEmail
+            contactFirstName
+            contactLastName
+            contactPhone
+            copyright
+            description
+            keywords
+            marketingUrl
+            notes
+            promotionalText
+            releaseType
+            supportUrl
+          ])
+        end
+        required.each do |field|
           raise "Missing #{field} in app configuration" if Apps.config[field].blank?
         end
+        return if Apps.skip_app_stores?
+
         raise "Missing demoAccountRequired in app configuration" unless Apps.config.key?(:demoAccountRequired)
         return unless Apps.config.fetch(:demoAccountRequired)
 
@@ -65,13 +81,18 @@ module Apps
 
       def validate_targets
         raise "No Apple targets configured" if Apps.targets.blank?
-        raise "Missing #{Apps.export_options_path}" unless File.file?(Apps.export_options_path)
+        raise "Missing macOS target for repository release" if Apps.skip_app_stores? && Apps.targets.none? { |target| target.fetch(:platform) == "MAC_OS" }
+        raise "Missing #{Apps.export_options_path}" if !Apps.skip_app_stores? && !File.file?(Apps.export_options_path)
 
         Apps.targets.each do |target|
-          %i[archiveDestination bundleIdentifier platform project scheme screenshots].each do |field|
+          required = %i[archiveDestination bundleIdentifier platform project scheme]
+          required << :screenshots unless Apps.skip_app_stores?
+          required.each do |field|
             raise "Missing #{field} for #{target.fetch(:name)}" if target[field].blank?
           end
           raise "Missing #{target.fetch(:project)}" unless File.directory?(Apps.project_path(target))
+          next if Apps.skip_app_stores?
+
           target.fetch(:screenshots).each do |screenshot|
             %i[displayType path].each do |field|
               raise "Missing screenshot #{field} for #{target.fetch(:name)}" if screenshot[field].blank?

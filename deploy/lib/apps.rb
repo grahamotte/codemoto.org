@@ -13,6 +13,7 @@ module Apps
     def config = @config ||= read_json(File.join(root, "config.json"))
     def version = config.fetch(:version)
     def build = config.fetch(:build)
+    def skip_app_stores? = config.fetch(:skip_app_stores, false)
     def export_options_path = File.join(root, "apple", "App", "Config", "ExportOptions.plist")
 
     def targets

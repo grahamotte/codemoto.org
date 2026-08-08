@@ -2,7 +2,7 @@ module Apps
   class UploadPatch < BasePatch
     class << self
       def needed?
-        Apps.targets.any? { |target| Cache.get(cache_key(target)).blank? }
+        !Apps.skip_app_stores? && Apps.targets.any? { |target| Cache.get(cache_key(target)).blank? }
       end
 
       def apply

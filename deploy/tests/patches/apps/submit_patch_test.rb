@@ -1,6 +1,13 @@
 require_relative "../../test_helper"
 
 class AppsSubmitPatchTest < Minitest::Test
+  def test_skips_app_store_submission
+    Apps.config[:skip_app_stores] = true
+
+    refute Apps::SubmitPatch.needed?
+    Apps::SubmitPatch.call
+  end
+
   def test_updates_metadata_and_submission_every_time
     stub_submission_requests
     stub_submission_requests

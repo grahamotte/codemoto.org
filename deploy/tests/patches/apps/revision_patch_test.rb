@@ -48,11 +48,12 @@ class AppsRevisionPatchTest < Minitest::Test
     Apps::RevisionPatch.apply
   end
 
-  def test_exports_and_notarizes_macos
+  def test_repository_only_release_exports_and_notarizes_macos
     target = Apps.targets.fetch(0)
     target[:name] = :macos
     target[:platform] = "MAC_OS"
     Apps.config[:name] = "Example App"
+    Apps.config[:skip_app_stores] = true
     FileUtils.mkdir_p(Apps.archive_path(target))
     commands = []
     options = nil
