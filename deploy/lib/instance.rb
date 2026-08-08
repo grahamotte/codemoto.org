@@ -14,10 +14,11 @@ class Instance
         quiet: true
       )
         .dig(:images)
-        .select { |i| i[:slug].include?("ubuntu") }
-        .select { |i| i[:slug].include?("x64") }
-        .sort_by { |i| i[:slug] }
-        .last
+        .select do |image|
+          match = image[:slug].match(/\Aubuntu-(\d{2})-04-x64\z/)
+          match.present? && match[1].to_i.even?
+        end
+        .max_by { |image| image[:slug] }
         .dig(:id)
     end
 

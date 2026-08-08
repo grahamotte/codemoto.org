@@ -12,7 +12,7 @@ class InstanceCreatePatchTest < Minitest::Test
 
   def test_apply
     Req.expects(:call).with(has_entry(:url, "https://api.digitalocean.com/v2/images"))
-      .returns(images: [ { slug: "ubuntu-x64", id: 1 } ])
+      .returns(images: [ { slug: "ubuntu-26-04-x64", id: 1 } ])
     Req.expects(:call).with(has_entry(:url, "https://api.digitalocean.com/v2/account/keys"))
       .returns(ssh_keys: [ { fingerprint: "fingerprint", id: 2 } ])
     Req.expects(:call).with(has_entries(method: :post, url: "https://api.digitalocean.com/v2/droplets"))

@@ -3,12 +3,14 @@ require_relative "../test_helper"
 class InstanceTest < Minitest::Test
   def test_image_id
     Req.expects(:call).returns(images: [
-      { slug: "ubuntu-24-x64", id: 1 },
-      { slug: "ubuntu-26-arm64", id: 2 },
-      { slug: "ubuntu-26-x64", id: 3 },
+      { slug: "ubuntu-24-04-x64", id: 1 },
+      { slug: "ubuntu-26-04-arm64", id: 2 },
+      { slug: "ubuntu-25-10-x64", id: 3 },
+      { slug: "ubuntu-26-04-x64", id: 4 },
+      { slug: "ubuntu-27-04-x64", id: 5 },
     ])
 
-    assert_equal 3, Instance.image_id
+    assert_equal 4, Instance.image_id
   end
 
   def test_ssh_key_id
@@ -42,7 +44,7 @@ class InstanceTest < Minitest::Test
 
   def test_create
     Req.expects(:call).with(has_entry(:url, "https://api.digitalocean.com/v2/images"))
-      .returns(images: [ { slug: "ubuntu-x64", id: 1 } ])
+      .returns(images: [ { slug: "ubuntu-26-04-x64", id: 1 } ])
     Req.expects(:call).with(has_entry(:url, "https://api.digitalocean.com/v2/account/keys"))
       .returns(ssh_keys: [ { fingerprint: "fingerprint", id: 2 } ])
     Req.expects(:call).with do |options|
