@@ -1,5 +1,5 @@
 {
-  "build": "0.1.9",
+  "build": "0.2.0",
   "contactEmail": "go@graham.lol",
   "contactFirstName": "Graham",
   "contactLastName": "Otte",
@@ -81,6 +81,6 @@
     },
     "android": {}
   },
-  "version": "0.1.9",
-  "whatsNew": "Bug fixes."
+  "version": "0.2.0",
+  "whatsNew": "Added repository-only macOS publishing and improved release reliability."
 }
