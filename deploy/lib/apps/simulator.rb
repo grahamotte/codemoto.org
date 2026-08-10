@@ -1,9 +1,18 @@
 module Apps
   class Simulator
+    ALIASES = {
+      mac: :macos,
+      osx: :macos,
+      phone: :iphone,
+      tablet: :ipad,
+      tvos: :tv,
+    }.freeze
+
     class << self
       def call(name)
         target, device = simulator(name)
         derived_data_path = File.join(Apps.tmp_root, "simulate", target.fetch(:name).to_s)
+        stop(target, device)
         build(target, derived_data_path)
         launch(target, device, derived_data_path)
       end
@@ -11,12 +20,27 @@ module Apps
       private
 
       def simulator(name)
+        name = ALIASES.fetch(name.to_sym, name.to_sym)
         Apps.targets.each do |target|
-          device = target.fetch(:simulators, {})[name.to_sym]
+          device = target.fetch(:simulators, {})[name]
           return [ target, device ] if device.present?
         end
         choices = Apps.targets.flat_map { |target| target.fetch(:simulators, {}).keys }.join(", ")
         raise "Unknown simulator: #{name}. Choose #{choices}"
+      end
+
+      def stop(target, device)
+        if target.fetch(:platform) == "MAC_OS"
+          process = File.basename(target.fetch(:simulatorProduct), ".app")
+          Cmd.local(Shellwords.join([ "pkill", "-x", process ])) rescue nil
+          return
+        end
+
+        devices = Cmd.local("xcrun simctl list devices available")
+        devices.lines.filter { |line| line.include?(device) && line.include?("(Booted)") }.each do |line|
+          udid = line.match(/[0-9A-F-]{36}/)&.to_s
+          Cmd.local(Shellwords.join([ "xcrun", "simctl", "shutdown", udid ])) if udid.present?
+        end
       end
 
       def build(target, derived_data_path)
