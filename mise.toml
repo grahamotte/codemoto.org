@@ -258,7 +258,7 @@ run = "set -o pipefail && set -a && source .env.production && cd deploy && ruby 
 
 [tasks."deploy:publish"]
 alias = ["publish"]
-depends = ["dependencies:deploy"]
+depends = ["deploy:push"]
 run = "set -o pipefail && set -a && source .env.production && cd deploy && ruby publish.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_publish.log"
 
 [tasks."deploy:patch"]
