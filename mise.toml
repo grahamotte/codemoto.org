@@ -242,6 +242,11 @@ depends = ["test:*"]
 # Deploy
 #
 
+[tasks."deploy:spawn"]
+alias = ["spawn"]
+usage = 'arg "<domain>" help="Website domain (e.g., example.com)"'
+run = 'cd deploy && ruby spawn.rb "$usage_domain"'
+
 [tasks."deploy"]
 depends = ["dependencies:deploy"]
 run = "set -o pipefail && set -a && source .env.production && cd deploy && ruby deploy.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_deploy.log"
