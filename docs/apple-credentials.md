@@ -8,6 +8,22 @@ Set `"skip_app_stores": true` at the top level of `apps/config.json` to publish 
 
 Repository-only releases do not require the Apple Distribution or Mac Installer Distribution certificate variables. The Apple Development and Developer ID certificate variables, App Store Connect API key variables, Apple team ID, and repository credentials remain required for archiving, provisioning, notarization, and release uploads.
 
+## App Review attachments
+
+Add an optional top-level `reviewAttachments` array to `apps/config.json` when App Review needs sample files, documentation, or videos to test the app:
+
+```json
+{
+  "reviewAttachments": [
+    {
+      "path": "apps/review/sample.zip"
+    }
+  ]
+}
+```
+
+Paths are resolved from the repository root. Publishing validates each file, uploads changed attachments to every configured Apple target's review details, removes attachments not listed in the configuration, and waits for App Store Connect to finish processing them before preparing the submission.
+
 ## Credentials
 
 | Environment variable | Purpose | Normal rotation |

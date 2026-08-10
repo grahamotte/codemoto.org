@@ -52,6 +52,10 @@ module Apps
       File.expand_path(screenshot.fetch(:path), Constants.local_root)
     end
 
+    def review_attachment_path(attachment)
+      File.expand_path(attachment.fetch(:path), Constants.local_root)
+    end
+
     def private_key
       @private_key ||= OpenSSL::PKey.read(ENV.fetch("APPLE_KEY_SECRET_BASE64").unpack1("m0"))
     end

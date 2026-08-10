@@ -45,6 +45,34 @@ class AppsValidationPatchTest < Minitest::Test
     assert_equal "Missing demoAccountName in app configuration", error.message
   end
 
+  def test_rejects_a_review_attachment_without_a_path
+    Apps.config[:reviewAttachments] = [ {} ]
+    Cmd.expects(:local).with("xcodebuild -version").returns("Xcode")
+
+    error = assert_raises(RuntimeError) { Apps::ValidationPatch.apply }
+
+    assert_equal "Missing review attachment path in app configuration", error.message
+  end
+
+  def test_rejects_a_missing_review_attachment
+    Apps.config[:reviewAttachments] = [ { path: "apps/review/sample.zip" } ]
+    Cmd.expects(:local).with("xcodebuild -version").returns("Xcode")
+
+    error = assert_raises(RuntimeError) { Apps::ValidationPatch.apply }
+
+    assert_equal "Missing apps/review/sample.zip", error.message
+  end
+
+  def test_accepts_an_existing_review_attachment
+    path = File.join(Apps.root, "review", "sample.zip")
+    FileUtils.mkdir_p(File.dirname(path))
+    File.write(path, "attachment")
+    Apps.config[:reviewAttachments] = [ { path: } ]
+    Cmd.expects(:local).with("xcodebuild -version").returns("Xcode")
+
+    Apps::ValidationPatch.apply
+  end
+
   def test_skips_app_store_validation_for_repository_releases
     Apps.config[:skip_app_stores] = true
     Apps.config[:description] = ""

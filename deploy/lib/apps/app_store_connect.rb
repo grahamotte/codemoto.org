@@ -295,7 +295,7 @@ module Apps
           },
         )
       else
-        post(
+        review_detail = post(
           "/v1/appStoreReviewDetails",
           data: {
             type: "appStoreReviewDetails",
@@ -304,8 +304,9 @@ module Apps
               appStoreVersion: { data: { type: "appStoreVersions", id: version_id } },
             },
           },
-        )
+        ).fetch(:data)
       end
+      update_review_attachments(review_detail.fetch(:id)) if Apps.config.fetch(:reviewAttachments, []).present?
     end
 
     def review_attributes
@@ -322,6 +323,83 @@ module Apps
       return attributes if attributes.fetch(:demoAccountRequired)
 
       attributes.except(:demoAccountName, :demoAccountPassword)
+    end
+
+    def update_review_attachments(review_detail_id)
+      configured = Apps.config.fetch(:reviewAttachments)
+      existing = get(
+        "/v1/appStoreReviewDetails/#{review_detail_id}/appStoreReviewAttachments",
+        params: { "limit" => 200 },
+      ).fetch(:data)
+      names = configured.map { |attachment| File.basename(Apps.review_attachment_path(attachment)) }
+      existing.reject { |item| names.include?(item.dig(:attributes, :fileName)) }.each do |item|
+        delete("/v1/appStoreReviewAttachments/#{item.fetch(:id)}")
+      end
+      processing = configured.filter_map do |attachment|
+        path = Apps.review_attachment_path(attachment)
+        checksum = Digest::MD5.file(path).hexdigest
+        current = existing.find { |item| item.dig(:attributes, :fileName) == File.basename(path) }
+        if current.present? && current.dig(:attributes, :sourceFileChecksum) == checksum
+          next current.fetch(:id) if current.dig(:attributes, :assetDeliveryState, :state) != "COMPLETE"
+
+          next
+        end
+
+        delete("/v1/appStoreReviewAttachments/#{current.fetch(:id)}") if current.present?
+        upload_review_attachment(review_detail_id, path, checksum)
+      end
+      wait_for_review_attachments(processing)
+    end
+
+    def upload_review_attachment(review_detail_id, path, checksum)
+      data = post(
+        "/v1/appStoreReviewAttachments",
+        data: {
+          type: "appStoreReviewAttachments",
+          attributes: { fileName: File.basename(path), fileSize: File.size(path) },
+          relationships: {
+            appStoreReviewDetail: { data: { type: "appStoreReviewDetails", id: review_detail_id } },
+          },
+        },
+      ).fetch(:data)
+      file = File.binread(path)
+      data.dig(:attributes, :uploadOperations).each do |operation|
+        headers = operation.fetch(:requestHeaders).to_h do |header|
+          [ header.fetch(:name), header.fetch(:value) ]
+        end
+        Req.call(
+          url: operation.fetch(:url),
+          method: operation.fetch(:method).downcase.to_sym,
+          headers:,
+          body: file.byteslice(operation.fetch(:offset), operation.fetch(:length)),
+          content: :text,
+        )
+      end
+      patch(
+        "/v1/appStoreReviewAttachments/#{data.fetch(:id)}",
+        data: {
+          type: "appStoreReviewAttachments",
+          id: data.fetch(:id),
+          attributes: { uploaded: true, sourceFileChecksum: checksum },
+        },
+      )
+      data.fetch(:id)
+    end
+
+    def wait_for_review_attachments(ids)
+      deadline = @clock.call + POLL_TIMEOUT
+      while ids.present?
+        ids = ids.reject do |id|
+          state = get("/v1/appStoreReviewAttachments/#{id}").dig(:data, :attributes, :assetDeliveryState, :state)
+          raise "Review attachment #{id} failed processing" if state == "FAILED"
+
+          state == "COMPLETE"
+        end
+        return if ids.blank?
+        raise "Timed out waiting for review attachments to process" if @clock.call >= deadline
+
+        @wait.call
+      end
     end
 
     def processed_build(app_id, target)

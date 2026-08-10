@@ -71,6 +71,10 @@ module Apps
         end
         return if Apps.skip_app_stores?
 
+        Apps.config.fetch(:reviewAttachments, []).each do |attachment|
+          raise "Missing review attachment path in app configuration" if attachment[:path].blank?
+          raise "Missing #{attachment.fetch(:path)}" unless File.file?(Apps.review_attachment_path(attachment))
+        end
         raise "Missing demoAccountRequired in app configuration" unless Apps.config.key?(:demoAccountRequired)
         return unless Apps.config.fetch(:demoAccountRequired)
 

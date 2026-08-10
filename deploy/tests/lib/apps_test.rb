@@ -22,6 +22,12 @@ class AppsTest < Minitest::Test
     assert Apps.skip_app_stores?
   end
 
+  def test_resolves_review_attachment_path
+    attachment = { path: "apps/review/sample.zip" }
+
+    assert_equal File.join(Constants.local_root, "apps/review/sample.zip"), Apps.review_attachment_path(attachment)
+  end
+
   def test_builds_authentication_arguments
     arguments = Apps.authentication_arguments
 

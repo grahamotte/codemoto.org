@@ -23,7 +23,7 @@ class AppsAppStoreConnectTest < Minitest::Test
       screenshot_sets,
       screenshots,
       { data: nil },
-      {},
+      { data: { id: "review" } },
       { included: [] },
     )
 
@@ -59,7 +59,7 @@ class AppsAppStoreConnectTest < Minitest::Test
       screenshot_sets,
       screenshots,
       { data: nil },
-      {},
+      { data: { id: "review" } },
       { included: [ { id: "build", attributes: { processingState: "VALID" } } ] },
       {},
       { data: [ { id: "submission", attributes: { state: "READY_FOR_REVIEW" } } ] },
@@ -199,6 +199,125 @@ class AppsAppStoreConnectTest < Minitest::Test
     assert_equal false, attributes.fetch(:demoAccountRequired)
     refute attributes.key?(:demoAccountName)
     refute attributes.key?(:demoAccountPassword)
+  end
+
+  def test_uploads_missing_review_attachment
+    client = Apps::AppStoreConnect.new
+    path = configure_review_attachments
+    checksum = Digest::MD5.file(path).hexdigest
+    expect_request(:get, "/v1/appStoreReviewDetails/review/appStoreReviewAttachments").returns(data: [])
+    request = nil
+    Req.expects(:call).with do |item|
+      matches = item[:method] == :post &&
+        item[:url] == "#{Apps::AppStoreConnect::BASE_URL}/v1/appStoreReviewAttachments"
+      request = item if matches
+      matches
+    end.returns(
+      data: {
+        id: "attachment",
+        attributes: {
+          uploadOperations: [
+            {
+              length: File.size(path),
+              method: "PUT",
+              offset: 0,
+              requestHeaders: [ { name: "Content-Type", value: "application/zip" } ],
+              url: "https://upload.example.com/attachment",
+            },
+          ],
+        },
+      },
+    )
+    Req.expects(:call).with do |item|
+      item[:url] == "https://upload.example.com/attachment" &&
+        item[:method] == :put &&
+        item[:headers] == { "Content-Type" => "application/zip" } &&
+        item[:body] == File.binread(path)
+    end.returns("")
+    Req.expects(:call).with do |item|
+      item[:method] == :patch &&
+        item[:url] == "#{Apps::AppStoreConnect::BASE_URL}/v1/appStoreReviewAttachments/attachment" &&
+        item.dig(:payload, :data, :attributes) == { uploaded: true, sourceFileChecksum: checksum }
+    end.returns({})
+    expect_request(:get, "/v1/appStoreReviewAttachments/attachment").returns(
+      data: { attributes: { assetDeliveryState: { state: "COMPLETE" } } },
+    )
+
+    client.send(:update_review_attachments, "review")
+
+    assert_equal File.basename(path), request.dig(:payload, :data, :attributes, :fileName)
+    assert_equal File.size(path), request.dig(:payload, :data, :attributes, :fileSize)
+    assert_equal "review", request.dig(
+      :payload,
+      :data,
+      :relationships,
+      :appStoreReviewDetail,
+      :data,
+      :id,
+    )
+  end
+
+  def test_reuses_unchanged_review_attachment_and_removes_unconfigured_attachments
+    path = configure_review_attachments
+    expect_request(:get, "/v1/appStoreReviewDetails/review/appStoreReviewAttachments").returns(
+      data: [
+        {
+          id: "attachment",
+          attributes: {
+            assetDeliveryState: { state: "COMPLETE" },
+            fileName: File.basename(path),
+            sourceFileChecksum: Digest::MD5.file(path).hexdigest,
+          },
+        },
+        {
+          id: "obsolete",
+          attributes: { fileName: "obsolete.zip" },
+        },
+      ],
+    )
+    expect_request(:delete, "/v1/appStoreReviewAttachments/obsolete").returns({})
+
+    Apps::AppStoreConnect.new.send(:update_review_attachments, "review")
+  end
+
+  def test_waits_for_review_attachment_processing
+    waits = 0
+    client = Apps::AppStoreConnect.new(wait: -> { waits += 1 })
+    expect_request(:get, "/v1/appStoreReviewAttachments/attachment").twice.returns(
+      { data: { attributes: { assetDeliveryState: { state: "UPLOAD_COMPLETE" } } } },
+      { data: { attributes: { assetDeliveryState: { state: "COMPLETE" } } } },
+    )
+
+    client.send(:wait_for_review_attachments, [ "attachment" ])
+
+    assert_equal 1, waits
+  end
+
+  def test_rejects_failed_review_attachment_processing
+    client = Apps::AppStoreConnect.new
+    expect_request(:get, "/v1/appStoreReviewAttachments/attachment").returns(
+      data: { attributes: { assetDeliveryState: { state: "FAILED" } } },
+    )
+
+    error = assert_raises(RuntimeError) do
+      client.send(:wait_for_review_attachments, [ "attachment" ])
+    end
+
+    assert_includes error.message, "failed processing"
+  end
+
+  def test_times_out_review_attachment_processing
+    times = [ 0, 1_200 ]
+    client = Apps::AppStoreConnect.new(clock: -> { times.shift })
+    expect_request(:get, "/v1/appStoreReviewAttachments/attachment").returns(
+      data: { attributes: { assetDeliveryState: { state: "UPLOAD_COMPLETE" } } },
+    )
+
+    error = assert_raises(RuntimeError) do
+      client.send(:wait_for_review_attachments, [ "attachment" ])
+    end
+
+    assert_includes error.message, "Timed out"
   end
 
   def test_uploads_missing_screenshot
@@ -402,5 +521,13 @@ class AppsAppStoreConnectTest < Minitest::Test
         },
       ],
     }
+  end
+
+  def configure_review_attachments
+    path = File.join(Apps.root, "review", "sample.zip")
+    FileUtils.mkdir_p(File.dirname(path))
+    File.write(path, "attachment")
+    Apps.config[:reviewAttachments] = [ { path: } ]
+    path
   end
 end
