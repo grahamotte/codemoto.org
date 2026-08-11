@@ -47,6 +47,34 @@ class AppsAppStoreConnectTest < Minitest::Test
     assert_equal 1, waits
   end
 
+  def test_finds_the_latest_approved_version
+    target = Apps.targets.fetch(0)
+    expect_request(:get, "/v1/apps").returns(data: [ { id: "app" } ])
+    expect_request(:get, "/v1/apps/app/appStoreVersions").returns(
+      data: [
+        { attributes: { appVersionState: "READY_FOR_SALE", versionString: "1.2.2" } },
+        { attributes: { appVersionState: "READY_FOR_REVIEW", versionString: "1.4.0" } },
+        { attributes: { appVersionState: "READY_FOR_DISTRIBUTION", versionString: "1.3.0" } },
+      ],
+    )
+
+    version = Apps::AppStoreConnect.new.latest_approved_version(target)
+
+    assert_equal "1.3.0", version
+  end
+
+  def test_returns_nil_without_an_approved_version
+    target = Apps.targets.fetch(0)
+    expect_request(:get, "/v1/apps").returns(data: [ { id: "app" } ])
+    expect_request(:get, "/v1/apps/app/appStoreVersions").returns(
+      data: [ { attributes: { appVersionState: "READY_FOR_REVIEW", versionString: "1.2.3" } } ],
+    )
+
+    version = Apps::AppStoreConnect.new.latest_approved_version(target)
+
+    assert_nil version
+  end
+
   def test_prepares_codemoto_without_submitting
     target = Apps.targets.fetch(0).merge(bundleIdentifier: "com.grahamotte.codemoto")
     requests = []

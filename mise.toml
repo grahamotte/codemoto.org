@@ -264,7 +264,19 @@ run = "set -o pipefail && set -a && source .env.production && cd deploy && ruby 
 [tasks."deploy:publish"]
 alias = ["publish"]
 depends = ["deploy:push"]
-run = "set -o pipefail && set -a && source .env.production && cd deploy && ruby publish.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_publish.log"
+usage = 'flag "--no-review" help="Prepare App Store versions without submitting them for review"'
+run = """
+set -o pipefail
+set -a
+source .env.production
+export PUBLISH_NO_REVIEW="${usage_no_review:-false}"
+cd deploy
+ruby publish.rb 2>&1 | tee log/$(date +%Y-%m-%d-%H-%M-%S)_publish.log
+"""
+
+[tasks."deploy:approved-version"]
+depends = ["dependencies:deploy"]
+run = "set -a && source .env.production && cd deploy && ruby approved_version.rb"
 
 [tasks."deploy:patch"]
 depends = ["dependencies:deploy"]

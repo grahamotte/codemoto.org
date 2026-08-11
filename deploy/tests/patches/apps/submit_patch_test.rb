@@ -28,9 +28,18 @@ class AppsSubmitPatchTest < Minitest::Test
     assert_equal "submitted", Cache.get("apps/1.2.3/ios/submission")
   end
 
+  def test_prepares_without_submitting_for_review
+    Apps.submit_for_review = false
+    stub_submission_requests(submit_for_review: false)
+
+    Apps::SubmitPatch.apply
+
+    assert_equal "prepared", Cache.get("apps/1.2.3/ios/submission")
+  end
+
   private
 
-  def stub_submission_requests(active: false)
+  def stub_submission_requests(active: false, submit_for_review: true)
     expect_request(:get, "/v1/apps").returns(data: [ { id: "app" } ])
     if active
       expect_request(:get, "/v1/apps/app/appStoreVersions").twice.returns(
@@ -100,7 +109,7 @@ class AppsSubmitPatchTest < Minitest::Test
     end
     expect_request(:get, "/v1/reviewSubmissions/submission/items").returns(data: [])
     expect_request(:post, "/v1/reviewSubmissionItems").returns({})
-    expect_request(:patch, "/v1/reviewSubmissions/submission").returns({})
+    expect_request(:patch, "/v1/reviewSubmissions/submission").returns({}) if submit_for_review
   end
 
   def expect_request(method, path)

@@ -19,6 +19,18 @@ module Apps
       READY_FOR_REVIEW
       REJECTED
     ].freeze
+    APPROVED_VERSION_STATES = %w[
+      ACCEPTED
+      DEVELOPER_REMOVED_FROM_SALE
+      PENDING_APPLE_RELEASE
+      PENDING_DEVELOPER_RELEASE
+      PREORDER_READY_FOR_SALE
+      PROCESSING_FOR_APP_STORE
+      READY_FOR_DISTRIBUTION
+      READY_FOR_SALE
+      REMOVED_FROM_SALE
+      REPLACED_WITH_NEW_VERSION
+    ].freeze
 
     def initialize(
       clock: CLOCK,
@@ -46,13 +58,24 @@ module Apps
       )
 
       submission = prepare_submission(app.fetch(:id), version.fetch(:id), target.fetch(:platform))
-      if target.fetch(:bundleIdentifier).include?("codemoto")
+      if !Apps.submit_for_review? || target.fetch(:bundleIdentifier).include?("codemoto")
         puts "Skipping actual submission for #{target.fetch(:bundleIdentifier)}."
         return :prepared
       end
 
       finalize_submission(submission.fetch(:id))
       :submitted
+    end
+
+    def latest_approved_version(target)
+      apps = get("/v1/apps", params: { "filter[bundleId]" => target.fetch(:bundleIdentifier) }).fetch(:data)
+      raise "Expected one App Store app for #{target.fetch(:bundleIdentifier)}" unless apps.length == 1
+
+      store_versions(apps.fetch(0).fetch(:id), target)
+        .select { |version| APPROVED_VERSION_STATES.include?(version_state(version)) }
+        .map { |version| version.dig(:attributes, :versionString) }
+        .select(&:present?)
+        .max_by { |version| Gem::Version.new(version) }
     end
 
     private

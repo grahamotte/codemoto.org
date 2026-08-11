@@ -22,6 +22,14 @@ class AppsTest < Minitest::Test
     assert Apps.skip_app_stores?
   end
 
+  def test_configures_review_submission
+    assert Apps.submit_for_review?
+
+    Apps.submit_for_review = false
+
+    refute Apps.submit_for_review?
+  end
+
   def test_resolves_review_attachment_path
     attachment = { path: "apps/review/sample.zip" }
 
