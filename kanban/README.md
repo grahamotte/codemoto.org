@@ -6,10 +6,11 @@ Only work with the Kanban board when the user asks to create or manage cards, or
 
 ## Columns
 
-1. `1 - Problems to Solve/` contains work that has not started.
-2. `2 - In Progress/` contains work an agent is actively implementing.
-3. `3 - In Review/` contains completed work awaiting user review.
-4. `4 - Done/` contains work the user has approved and the agent has committed.
+1. `1 - Problems to Solve/` contains known problems that could be solved but are not being worked on. Cards in this column describe problems, not prescribed solutions.
+2. `2 - In Progress/` contains work an agent is currently working on.
+3. `3 - In Review/` contains work the agent considers complete and has asked the user to review.
+4. `4 - Done/` contains work that resulted in a code change, passed the user's review, and was committed.
+5. `5 - Won't Do/` contains cards that will not be worked on, including duplicates, deferred problems, and reports that were determined not to be issues. This is a permanent graveyard for cards, but placing a card here does not necessarily mean the underlying problem will never be addressed. Agents should not inspect this column unless the user specifically references it or asks them to.
 
 ## Cards
 
@@ -51,6 +52,7 @@ Refer to a card by its code, title, or filename. Preserve its filename while mov
 4. The agent moves completed work to `3 - In Review/` and asks the user to review it. The implementation and card move remain uncommitted while review is pending.
 5. If the user reports an issue or requests a change, the agent moves the card back to `2 - In Progress/`, updates the work, verifies it, and returns the card to `3 - In Review/`.
 6. When the user explicitly approves the work, the agent moves the card to `4 - Done/` and commits the completed work and card move together.
+7. When the user decides a card should not be worked on, the agent moves it to `5 - Won't Do/` and records the reason in the card. Cards never leave `5 - Won't Do/`. If the user later decides to address the underlying problem, create a new card in `1 - Problems to Solve/` instead of restoring the old card.
 
 ## Other
 
