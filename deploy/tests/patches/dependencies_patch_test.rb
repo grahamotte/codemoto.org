@@ -41,6 +41,7 @@ class DependenciesPatchTest < Minitest::Test
 
     assert_equal "4.0.6", versions.fetch("ruby")
     assert_equal "26.7.0", versions.fetch("node")
+    assert_equal "1.18.21", versions.fetch("opencode")
   end
 
   def test_apply
