@@ -92,6 +92,19 @@ class AgentTest < ActiveSupport::TestCase
     refute File.exist?(dirs.first)
   end
 
+  def test_call_merges_env
+    FakeAgent.result = [ "", "", status(success: true) ]
+
+    FakeAgent.call(prompt: "Prompt", env: { "EXAMPLE_TOKEN" => "example-token" })
+
+    dir = FakeAgent.captured_options.fetch(:chdir)
+    assert_equal "example-token", FakeAgent.captured_environment.fetch("EXAMPLE_TOKEN")
+    assert_equal "test-token", FakeAgent.captured_environment.fetch("OPENROUTER_API_KEY")
+    assert_equal dir, FakeAgent.captured_environment.fetch("TMPDIR")
+    refute_includes FakeAgent.captured_environment, "DB_NAME"
+    refute_includes FakeAgent.captured_environment, "RAILS_ENV"
+  end
+
   def test_call_prefixes_openrouter
     FakeAgent.result = [ "", "", status(success: true) ]
 
