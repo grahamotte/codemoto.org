@@ -3,12 +3,13 @@ require "test_helper"
 class AgentTest < ActiveSupport::TestCase
   class FakeAgent < Agent
     class << self
-      attr_accessor :result, :captured_command, :captured_environment, :captured_options
+      attr_accessor :result, :captured_command, :captured_environment, :captured_options, :order
     end
 
     private
 
     def capture
+      self.class.order << :run
       self.class.captured_command = command
       self.class.captured_environment = environment
       self.class.captured_options = options
@@ -23,6 +24,7 @@ class AgentTest < ActiveSupport::TestCase
     FakeAgent.captured_command = nil
     FakeAgent.captured_environment = nil
     FakeAgent.captured_options = nil
+    FakeAgent.order = []
   end
 
   def teardown
@@ -59,9 +61,35 @@ class AgentTest < ActiveSupport::TestCase
       "--variant",
       "high",
     ], FakeAgent.captured_command
-    assert_equal({ "OPENROUTER_API_KEY" => "test-token" }, FakeAgent.captured_environment)
+    dir = FakeAgent.captured_options.fetch(:chdir)
+    assert_equal({ "OPENROUTER_API_KEY" => "test-token", "TMPDIR" => dir }, FakeAgent.captured_environment)
     assert_equal "Answer this prompt", FakeAgent.captured_options.fetch(:stdin_data)
-    assert_equal Rails.root.to_s, FakeAgent.captured_options.fetch(:chdir)
+    refute_equal Rails.root.to_s, dir
+    refute File.exist?(dir)
+  end
+
+  def test_call_with_before_and_after_run
+    FakeAgent.result = [ "", "", status(success: true) ]
+    dirs = []
+
+    FakeAgent.call(
+      prompt: "Prompt",
+      before_run: ->(dir) {
+        FakeAgent.order << :before
+        dirs << dir
+        File.write(File.join(dir, "setup.txt"), "ok")
+      },
+      after_run: ->(dir) {
+        FakeAgent.order << :after
+        dirs << dir
+        assert_equal "ok", File.read(File.join(dir, "setup.txt"))
+      },
+    )
+
+    assert_equal [ :before, :run, :after ], FakeAgent.order
+    assert_equal 1, dirs.uniq.size
+    assert_equal dirs.first, FakeAgent.captured_options.fetch(:chdir)
+    refute File.exist?(dirs.first)
   end
 
   def test_call_prefixes_openrouter
