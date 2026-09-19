@@ -2,13 +2,13 @@ require "open3"
 
 class Agent
   class << self
-    def call(model: "opencode-go/deepseek-v4-flash", effort: "high", prompt:)
+    def call(model: "deepseek/deepseek-v4-flash", effort: "high", prompt:)
       new(model:, effort:, prompt:).call
     end
   end
 
   def initialize(model:, effort:, prompt:)
-    @model = model
+    @model = model.start_with?("openrouter/") ? model : "openrouter/#{model}"
     @effort = effort
     @prompt = prompt
   end
@@ -29,7 +29,7 @@ class Agent
     Open3.capture3(environment, *command, **options)
   end
 
-  def environment = { "OPENCODE_API_KEY" => ENV.fetch("OPENCODE_TOKEN") }
+  def environment = { "OPENROUTER_API_KEY" => ENV.fetch("OPENROUTER_TOKEN") }
 
   def options = { stdin_data: @prompt, chdir: Rails.root.to_s }
 

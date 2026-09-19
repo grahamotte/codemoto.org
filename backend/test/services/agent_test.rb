@@ -17,8 +17,8 @@ class AgentTest < ActiveSupport::TestCase
   end
 
   def setup
-    @original_token = ENV["OPENCODE_TOKEN"]
-    ENV["OPENCODE_TOKEN"] = "test-token"
+    @original_token = ENV["OPENROUTER_TOKEN"]
+    ENV["OPENROUTER_TOKEN"] = "test-token"
     FakeAgent.result = nil
     FakeAgent.captured_command = nil
     FakeAgent.captured_environment = nil
@@ -26,7 +26,7 @@ class AgentTest < ActiveSupport::TestCase
   end
 
   def teardown
-    ENV["OPENCODE_TOKEN"] = @original_token
+    ENV["OPENROUTER_TOKEN"] = @original_token
   end
 
   def test_call
@@ -43,7 +43,7 @@ class AgentTest < ActiveSupport::TestCase
     ]
 
     result = FakeAgent.call(
-      model: "opencode-go/deepseek-v4-pro",
+      model: "anthropic/claude-sonnet-4",
       effort: "high",
       prompt: "Answer this prompt",
     )
@@ -55,22 +55,29 @@ class AgentTest < ActiveSupport::TestCase
       "--format",
       "json",
       "--model",
-      "opencode-go/deepseek-v4-pro",
+      "openrouter/anthropic/claude-sonnet-4",
       "--variant",
       "high",
     ], FakeAgent.captured_command
-    assert_equal({ "OPENCODE_API_KEY" => "test-token" }, FakeAgent.captured_environment)
+    assert_equal({ "OPENROUTER_API_KEY" => "test-token" }, FakeAgent.captured_environment)
     assert_equal "Answer this prompt", FakeAgent.captured_options.fetch(:stdin_data)
     assert_equal Rails.root.to_s, FakeAgent.captured_options.fetch(:chdir)
   end
 
-  def test_call_uses_model_verbatim
+  def test_call_prefixes_openrouter
     FakeAgent.result = [ "", "", status(success: true) ]
 
-    FakeAgent.call(model: "deepseek-v4-pro", effort: "high", prompt: "Prompt")
+    FakeAgent.call(model: "deepseek/deepseek-v4-flash", effort: "high", prompt: "Prompt")
 
-    assert_includes FakeAgent.captured_command, "deepseek-v4-pro"
-    refute_includes FakeAgent.captured_command, "opencode-go/deepseek-v4-pro"
+    assert_includes FakeAgent.captured_command, "openrouter/deepseek/deepseek-v4-flash"
+  end
+
+  def test_call_keeps_openrouter_prefix
+    FakeAgent.result = [ "", "", status(success: true) ]
+
+    FakeAgent.call(model: "openrouter/deepseek/deepseek-v4-flash", effort: "high", prompt: "Prompt")
+
+    assert_equal "openrouter/deepseek/deepseek-v4-flash", FakeAgent.captured_command[FakeAgent.captured_command.index("--model") + 1]
   end
 
   def test_call_with_defaults
@@ -78,7 +85,7 @@ class AgentTest < ActiveSupport::TestCase
 
     FakeAgent.call(prompt: "Prompt")
 
-    assert_includes FakeAgent.captured_command, "opencode-go/deepseek-v4-flash"
+    assert_includes FakeAgent.captured_command, "openrouter/deepseek/deepseek-v4-flash"
     assert_includes FakeAgent.captured_command, "high"
   end
 
@@ -107,7 +114,7 @@ class AgentTest < ActiveSupport::TestCase
   end
 
   def test_call_without_token
-    ENV.delete("OPENCODE_TOKEN")
+    ENV.delete("OPENROUTER_TOKEN")
     FakeAgent.result = [ "", "", status(success: true) ]
 
     assert_raises(KeyError) do
