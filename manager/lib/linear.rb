@@ -63,7 +63,7 @@ class Linear
 
       STATUSES.each_with_index do |want, index|
         existing = match_state(current, want, used_ids)
-        position = STATUSES.take(index).count { |status| status[:type] == want[:type] }.to_f
+        position = index.to_f
         if existing
           used_ids << existing.fetch(:id)
           input = {}

@@ -1,7 +1,7 @@
 require_relative "test_helper"
 
 class WatchTest < Minitest::Test
-  def test_syncs_statuses_and_triggers_work
+  def test_triggers_work_without_syncing_statuses
     calls = stub_watch(
       items: [
         { id: "item-1", identifier: "MOTO-1", url: "https://linear.app/gotte/issue/MOTO-1", state: { id: "s-ready", name: "Ready" } },
@@ -11,9 +11,9 @@ class WatchTest < Minitest::Test
     output, = capture_io { Watch.call }
 
     assert_equal "started working on MOTO-1\n", output
-    assert calls.any? { |call| graphql?(call, "query States") }
     assert calls.any? { |call| graphql?(call, "query Issues") }
     assert calls.any? { |call| call[:url].to_s.end_with?("/api/openchamber/sessions") }
+    assert_empty calls.select { |call| graphql?(call, "mutation WorkflowState") }
   end
 
   def test_logs_openchamber_http_errors_without_raising
@@ -61,10 +61,6 @@ class WatchTest < Minitest::Test
 
   def stub_watch(items:)
     calls = []
-    states = Linear::STATUSES.each_with_index.map do |status, index|
-      position = Linear::STATUSES.take(index).count { |item| item[:type] == status[:type] }.to_f
-      { id: "s-#{status[:name].downcase}", **status, position: }
-    end
     ok = Object.new
     ok.define_singleton_method(:success?) { true }
     Open3.stubs(:capture3).with do |*args, **_kwargs|
@@ -74,6 +70,10 @@ class WatchTest < Minitest::Test
       end
       true
     end.returns([ "", "", ok ])
+    states = Linear::STATUSES.each_with_index.map do |status, index|
+      position = index.to_f
+      { id: "s-#{status[:name].downcase}", **status, position: }
+    end
     Req.stubs(:call).with do |*args, **kwargs|
       opts = req_opts(args, kwargs)
       next false unless opts[:url].to_s.end_with?("/api/openchamber/sessions")
