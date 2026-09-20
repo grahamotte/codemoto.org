@@ -18,6 +18,7 @@ class TriggerTest < Minitest::Test
     prompt = prompt_for(calls, "MOTO-1")
     assert_includes prompt, "Do this Plane card: https://app.plane.so/otte/browse/MOTO-1/"
     assert_includes prompt, "Open a worktree."
+    assert_includes prompt, "Hard set to the current origin main."
     assert_includes prompt, "Open a GitHub PR with `gh pr create` using `GITHUB_TOKEN`"
     assert_includes prompt, "Move the card to waiting for review"
     assert_includes prompt, "Move the card to groom"
@@ -72,6 +73,7 @@ class TriggerTest < Minitest::Test
 
     assert_equal 1, calls.count { |call| call[:method] == :patch }
     assert_includes prompt_for(calls, "MOTO-1"), "Open a worktree."
+    assert_includes prompt_for(calls, "MOTO-1"), "Hard set to the current origin main."
     assert_includes prompt_for(calls, "MOTO-3"), "Rebase the GitHub PR on the card."
   end
 
