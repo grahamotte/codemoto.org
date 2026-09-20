@@ -2,11 +2,14 @@ class Trigger
   READY = "ready"
   WORKING = "working"
   APPROVED = "approved"
+  COMPLETED = "completed"
+  CANCELED = "canceled"
 
   class << self
     def call
-      Linear.issues.each do |item|
-        case Linear.column(item)
+      Linear.issues.group_by { |item| Linear.column(item) }.each do |column, items|
+        item = items.first
+        case column
         when READY
           Linear.move(item, WORKING)
           begin
@@ -19,6 +22,12 @@ class Trigger
         when APPROVED
           Agent.start(merge_prompt(item), directory: Worktree.directory(item))
           puts "merging #{Linear.identifier(item)}"
+        when COMPLETED
+          Agent.start(archive_prompt(item), directory: Worktree.root)
+          puts "archiving #{Linear.identifier(item)}"
+        when CANCELED
+          Agent.start(cancel_prompt(item), directory: Worktree.root)
+          puts "canceling #{Linear.identifier(item)}"
         end
       end
     end
@@ -55,6 +64,28 @@ class Trigger
         2. Merge the PR with `gh pr merge` using `GITHUB_TOKEN`.
         3. Remove any worktrees created for this card.
         4. Move the card to completed.
+      PROMPT
+    end
+
+    def archive_prompt(item)
+      identifier = Linear.identifier(item)
+      <<~PROMPT
+        This Linear issue is completed: #{Linear.url(item)}
+
+        1. Read the card and all comments.
+        2. Create a markdown file at cards/#{identifier}.md containing all prompts, comments, and data from the card. If there are assets like an image, describe and/or transcribe them in the markdown.
+        3. Commit, open a GitHub PR with `gh pr create` using `GITHUB_TOKEN`, and merge it with `gh pr merge`.
+        4. Remove any worktrees created for this card.
+        5. Delete the Linear card.
+      PROMPT
+    end
+
+    def cancel_prompt(item)
+      <<~PROMPT
+        This Linear issue is canceled: #{Linear.url(item)}
+
+        1. Remove any worktrees created for this card.
+        2. Delete the Linear card.
       PROMPT
     end
   end

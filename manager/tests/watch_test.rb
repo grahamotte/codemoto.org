@@ -65,6 +65,15 @@ class WatchTest < Minitest::Test
       position = Linear::STATUSES.take(index).count { |item| item[:type] == status[:type] }.to_f
       { id: "s-#{status[:name].downcase}", **status, position: }
     end
+    ok = Object.new
+    ok.define_singleton_method(:success?) { true }
+    Open3.stubs(:capture3).with do |*args, **_kwargs|
+      if args[1] == "worktree" && args[2] == "add"
+        path = args[3] == "-b" ? args[5] : args[3]
+        FileUtils.mkdir_p(path)
+      end
+      true
+    end.returns([ "", "", ok ])
     Req.stubs(:call).with do |*args, **kwargs|
       opts = req_opts(args, kwargs)
       next false unless opts[:url].to_s.end_with?("/api/openchamber/sessions")

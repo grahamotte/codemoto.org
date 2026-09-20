@@ -74,6 +74,75 @@ class TriggerTest < Minitest::Test
     assert_equal [ "s-working", "s-ready" ], states
   end
 
+  def test_starts_archive_agent_for_completed_cards
+    calls = stub_manager(
+      items: [
+        { id: "item-4", identifier: "MOTO-4", url: "https://linear.app/gotte/issue/MOTO-4", state: { id: "s-completed", name: "Completed" } },
+      ],
+    )
+
+    output, = capture_io { Trigger.call }
+
+    assert_equal "archiving MOTO-4\n", output
+    refute calls.any? { |call| graphql?(call, "mutation IssueUpdate") }
+    prompt = prompt_for(calls, "MOTO-4")
+    assert_includes prompt, "This Linear issue is completed: https://linear.app/gotte/issue/MOTO-4"
+    assert_includes prompt, "Create a markdown file at cards/MOTO-4.md"
+    assert_includes prompt, "If there are assets like an image, describe and/or transcribe them in the markdown."
+    assert_includes prompt, "open a GitHub PR with `gh pr create` using `GITHUB_TOKEN`"
+    assert_includes prompt, "merge it with `gh pr merge`"
+    assert_includes prompt, "Remove any worktrees created for this card."
+    assert_includes prompt, "Delete the Linear card."
+    assert_equal Worktree.root, directory_for(calls, "MOTO-4")
+  end
+
+  def test_starts_cancel_agent_for_canceled_cards
+    calls = stub_manager(
+      items: [
+        { id: "item-5", identifier: "MOTO-5", url: "https://linear.app/gotte/issue/MOTO-5", state: { id: "s-canceled", name: "Canceled" } },
+      ],
+    )
+
+    output, = capture_io { Trigger.call }
+
+    assert_equal "canceling MOTO-5\n", output
+    refute calls.any? { |call| graphql?(call, "mutation IssueUpdate") }
+    prompt = prompt_for(calls, "MOTO-5")
+    assert_includes prompt, "This Linear issue is canceled: https://linear.app/gotte/issue/MOTO-5"
+    assert_includes prompt, "Remove any worktrees created for this card."
+    assert_includes prompt, "Delete the Linear card."
+    refute_includes prompt, "Create a markdown file"
+    assert_equal Worktree.root, directory_for(calls, "MOTO-5")
+  end
+
+  def test_starts_one_agent_per_step
+    calls = stub_manager(
+      items: [
+        { id: "item-1", identifier: "MOTO-1", url: "https://linear.app/gotte/issue/MOTO-1", state: { id: "s-ready", name: "Ready" } },
+        { id: "item-1b", identifier: "MOTO-8", url: "https://linear.app/gotte/issue/MOTO-8", state: { id: "s-ready", name: "Ready" } },
+        { id: "item-3", identifier: "MOTO-3", url: "https://linear.app/gotte/issue/MOTO-3", state: { id: "s-approved", name: "Approved" } },
+        { id: "item-3b", identifier: "MOTO-9", url: "https://linear.app/gotte/issue/MOTO-9", state: { id: "s-approved", name: "Approved" } },
+        { id: "item-4", identifier: "MOTO-4", url: "https://linear.app/gotte/issue/MOTO-4", state: { id: "s-completed", name: "Completed" } },
+        { id: "item-4b", identifier: "MOTO-10", url: "https://linear.app/gotte/issue/MOTO-10", state: { id: "s-completed", name: "Completed" } },
+        { id: "item-5", identifier: "MOTO-5", url: "https://linear.app/gotte/issue/MOTO-5", state: { id: "s-canceled", name: "Canceled" } },
+        { id: "item-5b", identifier: "MOTO-12", url: "https://linear.app/gotte/issue/MOTO-12", state: { id: "s-canceled", name: "Canceled" } },
+      ],
+    )
+
+    output, = capture_io { Trigger.call }
+
+    assert_equal "started working on MOTO-1\nmerging MOTO-3\narchiving MOTO-4\ncanceling MOTO-5\n", output
+    assert_equal 1, calls.count { |call| graphql?(call, "mutation IssueUpdate") }
+    refute calls.any? { |call| call[:prompt].to_s.include?("MOTO-8") }
+    refute calls.any? { |call| call[:prompt].to_s.include?("MOTO-9") }
+    refute calls.any? { |call| call[:prompt].to_s.include?("MOTO-10") }
+    refute calls.any? { |call| call[:prompt].to_s.include?("MOTO-12") }
+    assert prompt_for(calls, "MOTO-1")
+    assert prompt_for(calls, "MOTO-3")
+    assert prompt_for(calls, "MOTO-4")
+    assert prompt_for(calls, "MOTO-5")
+  end
+
   def test_handles_ready_and_approved_together
     calls = stub_manager(
       items: [
