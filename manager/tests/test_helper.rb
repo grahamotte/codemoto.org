@@ -1,7 +1,9 @@
 require "bundler/setup"
+require "fileutils"
 require "minitest/autorun"
 require "minitest/parallel_fork"
 require "mocha/minitest"
+require "tmpdir"
 require "webmock/minitest"
 require "test_safety"
 WebMock.disable_net_connect!
@@ -32,6 +34,16 @@ Req.define_singleton_method(:call) { |*, **| raise UnsafeTestOperation, "Req.cal
 module ManagerTestIsolation
   def before_setup
     Linear.reset
+    Worktree.reset
+    @worktree_test_dir = Dir.mktmpdir("manager-worktree")
+    Worktree.root = File.join(@worktree_test_dir, "repo")
+    FileUtils.mkdir_p(Worktree.root)
+    super
+  end
+
+  def after_teardown
+    Worktree.reset
+    FileUtils.remove_entry(@worktree_test_dir) if @worktree_test_dir
     super
   end
 end

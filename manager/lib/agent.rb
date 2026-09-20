@@ -3,18 +3,18 @@ class Agent
   URL = "http://127.0.0.1:57123"
 
   class << self
-    def start(prompt)
+    def start(prompt, directory: ROOT)
       case ENV.fetch("AGENT_RUNNER")
       when "openchamber"
-        openchamber(prompt)
+        openchamber(prompt, directory)
       else
         raise "Unknown AGENT_RUNNER #{ENV.fetch("AGENT_RUNNER")}"
       end
     end
 
-    def openchamber(prompt)
+    def openchamber(prompt, directory)
       payload = {
-        directory: ROOT,
+        directory:,
         prompt:,
         model: ENV.fetch("AGENT_MODEL"),
       }

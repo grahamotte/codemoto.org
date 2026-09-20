@@ -16,6 +16,7 @@ The "Repo Specific" section blow contains rules specific to this repo only.
 4. Lint, type-check, and test code changes using the tasks defined in the root `mise.toml`.
 5. Use root `mise` tasks instead of invoking underlying tools directly when an applicable task exists.
 6. Do not create a canvas or visualization unless the user specifically requests one.
+7. When opening a git worktree, copy `.env.development`, `.env.production`, and `backend/db/schema.rb` from the main checkout into the worktree before running tests or mise tasks.
 
 ## Ruby
 
