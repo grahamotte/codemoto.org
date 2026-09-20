@@ -376,6 +376,10 @@ run = "cd manager && bundle exec ruby trigger.rb"
 depends = ["dependencies:manager"]
 run = "cd manager && bundle exec ruby trigger_all.rb"
 
+[tasks."manager:sync"]
+depends = ["dependencies:manager"]
+run = "cd manager && bundle exec ruby sync.rb"
+
 [tasks."manager:watch"]
 depends = ["dependencies:manager"]
 run = "cd manager && bundle exec ruby watch.rb"
