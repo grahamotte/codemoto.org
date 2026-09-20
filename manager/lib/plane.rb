@@ -35,8 +35,12 @@ class Plane
       nil
     end
 
+    def identifier(item)
+      "#{project}-#{item.fetch(:sequence_id)}"
+    end
+
     def url(item)
-      "#{APP}/#{workspace}/browse/#{project}-#{item.fetch(:sequence_id)}/"
+      "#{APP}/#{workspace}/browse/#{identifier(item)}/"
     end
 
     private

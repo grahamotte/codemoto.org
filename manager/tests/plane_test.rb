@@ -48,6 +48,10 @@ class PlaneTest < Minitest::Test
     assert_equal({ "X-API-Key" => "plane-token" }, payload.fetch(:headers))
   end
 
+  def test_identifier
+    assert_equal "MOTO-1", Plane.identifier({ sequence_id: 1 })
+  end
+
   def test_url
     assert_equal "https://app.plane.so/otte/browse/MOTO-1/", Plane.url({ sequence_id: 1 })
   end
@@ -56,6 +60,7 @@ class PlaneTest < Minitest::Test
     ENV["PLANE_WORKSPACE"] = "acme"
     ENV["PLANE_PROJECT"] = "ENG"
 
+    assert_equal "ENG-1", Plane.identifier({ sequence_id: 1 })
     assert_equal "https://app.plane.so/acme/browse/ENG-1/", Plane.url({ sequence_id: 1 })
   ensure
     ENV["PLANE_WORKSPACE"] = "otte"
