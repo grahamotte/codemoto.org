@@ -1,7 +1,6 @@
 class GitRepoPatch < BasePatch
   class << self
     def always
-      push_to("codeberg", Constants.codeberg_repo)
       push_to("github", Constants.github_repo)
     end
 

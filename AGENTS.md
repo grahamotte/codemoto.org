@@ -41,12 +41,23 @@ The "Repo Specific" section blow contains rules specific to this repo only.
 - After every code change, run the whole suite with `mise test`.
 - Do not write integration tests.
 
-## Kanban
+## Plane
 
-- `kanban/` is the repository's local work board. When using it, read and follow `kanban/README.md`.
-- Only use the Kanban board when the user asks to create or manage cards, or asks for work on an existing card. Other work does not require a card.
-- Never create a card unless the user explicitly instructs you to do so.
-- When the user requests standalone card management, commit only the requested card changes immediately without asking for confirmation.
+Work items live in Plane. Use the Plane MCP tools. Never guess a state id.
+
+Columns, in order: `backlog`, `groom`, `ready for agent`, `agent working`, `waiting for review`, `approved`, `done`, `cancelled`.
+
+- Read a card: `workitem retrieve_by_identifier` with the identifier in the URL (e.g. `MOTO-1`). Then `workitem_comment list` with that `project` and `id`.
+- Comment: `workitem_comment create` with `project_id`, `workitem_id`, and `comment_html`.
+- Move a card: `state list` for the project, pick the state whose `name` matches the column case-insensitively, then `workitem update` with that state's id.
+- Link a PR: `workitem_link create` with `project_id`, `workitem_id`, and the PR `url`.
+
+## GitHub
+
+Open pull requests on GitHub with `gh`, using `GITHUB_TOKEN` from the environment.
+
+- Push the branch, then `gh pr create`.
+- Merge with `gh pr merge`.
 
 ## File Structure
 
@@ -61,7 +72,7 @@ The "Repo Specific" section blow contains rules specific to this repo only.
 - `frontend/` - React website.
 - `frontend/subdomains.json` - Website subdomain configuration.
 - `gems/` - Shared Ruby gems.
-- `kanban/` - Repository-local work board and workflow instructions.
+- `manager/` - Plane work-item polling and agent triggers.
 - `scripts/` - General-purpose scripts.
 - `mise.toml` - Project tooling and task definitions.
 
