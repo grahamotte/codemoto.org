@@ -137,6 +137,9 @@ class LinearTest < Minitest::Test
     assert_equal "Ready", updates.find { |variables| variables[:id] == "s-progress" }.dig(:input, :name)
     assert_equal "Completed", updates.find { |variables| variables[:id] == "s-done" }.dig(:input, :name)
     assert_equal [ "Working", "Review", "Approved" ], creates.map { |input| input[:name] }
+    assert_equal [ 3.0, 4.0, 5.0 ], creates.map { |input| input[:position] }
+    assert_equal 6.0, updates.find { |variables| variables[:id] == "s-done" }.dig(:input, :position)
+    assert_equal 7.0, updates.find { |variables| variables[:id] == "s-canceled" }.dig(:input, :position)
     assert_equal [ "s-groom" ], archives
     assert_includes output, "renamed Todo to Planned"
     assert_includes output, "renamed In Progress to Ready"
@@ -206,7 +209,7 @@ class LinearTest < Minitest::Test
 
   def synced_states
     Linear::STATUSES.each_with_index.map do |status, index|
-      position = Linear::STATUSES.take(index).count { |item| item[:type] == status[:type] }.to_f
+      position = index.to_f
       { id: "s-#{status[:name].downcase}", **status, position: }
     end
   end
