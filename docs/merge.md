@@ -76,10 +76,7 @@ AGENT_VARIANT=high
 
 Preserve downstream intent. Keep `AGENTS.md` **Repo Specific** and any extra skills that belong to the app.
 
-Do not keep these incoming Code Moto files:
-
-- `cards/MOTO-*.md` — Code Moto's archived Linear issues
-- `docs/workflow-ok.md`, `docs/workflow-ok-2.md`, `docs/workflow-ok-3.md` — manager workflow checks
+Incoming `cards/MOTO-*.md` are Code Moto archives; leave them.
 
 Expect conflicts in `AGENTS.md`, `mise.toml`, `.env.default`, and skill directories. Incoming Code Moto replaces kanban instructions with Linear and GitHub sections, adds `manager/`, and copies env files plus `backend/db/schema.rb` into card worktrees.
 
