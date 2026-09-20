@@ -8,31 +8,43 @@ class Trigger
   class << self
     def call
       Linear.issues.group_by { |item| Linear.column(item) }.each do |column, items|
-        item = items.first
+        item = items.find { |candidate| !Linear.tagged?(candidate, WORKING) }
+        next if item.blank?
+
         case column
         when READY
           Linear.move(item, WORKING)
           begin
-            Agent.start(work_prompt(item), directory: Worktree.open(item))
+            start_agent(item, work_prompt(item), directory: Worktree.open(item))
           rescue StandardError
             Linear.move(item, READY)
             raise
           end
           puts "started working on #{Linear.identifier(item)}"
         when APPROVED
-          Agent.start(merge_prompt(item), directory: Worktree.directory(item))
+          start_agent(item, merge_prompt(item), directory: Worktree.directory(item))
           puts "merging #{Linear.identifier(item)}"
         when COMPLETED
-          Agent.start(archive_prompt(item), directory: Worktree.root)
+          start_agent(item, archive_prompt(item), directory: Worktree.root)
           puts "archiving #{Linear.identifier(item)}"
         when CANCELED
-          Agent.start(cancel_prompt(item), directory: Worktree.root)
+          start_agent(item, cancel_prompt(item), directory: Worktree.root)
           puts "canceling #{Linear.identifier(item)}"
         end
       end
     end
 
     private
+
+    def start_agent(item, prompt, directory:)
+      Linear.tag(item, WORKING)
+      begin
+        Agent.start(prompt, directory:)
+      rescue StandardError
+        Linear.untag(item, WORKING)
+        raise
+      end
+    end
 
     def work_prompt(item)
       <<~PROMPT
@@ -49,9 +61,11 @@ class Trigger
            - Open a GitHub PR with `gh pr create` using `GITHUB_TOKEN`
            - Link the PR to the card
            - Comment on the card describing what you did
+           - Remove the working tag
            - Move the card to review
         6. If the card is blocked or the change is not possible:
            - Comment on the card explaining why
+           - Remove the working tag
            - Move the card to planned
       PROMPT
     end
@@ -64,6 +78,7 @@ class Trigger
         2. Merge the PR with `gh pr merge` using `GITHUB_TOKEN`.
         3. Remove any worktrees created for this card.
         4. Move the card to completed.
+        5. Remove the working tag.
       PROMPT
     end
 

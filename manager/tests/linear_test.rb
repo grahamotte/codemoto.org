@@ -70,6 +70,51 @@ class LinearTest < Minitest::Test
     assert_equal({ "Authorization" => "linear-token" }, payload.fetch(:headers))
   end
 
+  def test_tag_adds_label
+    calls = stub_linear
+
+    Linear.tag({ id: "item-1" }, "working")
+
+    payload = calls.find { |call| graphql?(call, "mutation IssueUpdate") }
+    assert_equal({ id: "item-1", input: { addedLabelIds: [ "l-working" ] } }, payload.dig(:payload, :variables))
+  end
+
+  def test_untag_removes_label
+    calls = stub_linear
+
+    Linear.untag({ id: "item-1" }, "working")
+
+    payload = calls.find { |call| graphql?(call, "mutation IssueUpdate") }
+    assert_equal({ id: "item-1", input: { removedLabelIds: [ "l-working" ] } }, payload.dig(:payload, :variables))
+  end
+
+  def test_tagged_from_label_names
+    assert Linear.tagged?({ labels: { nodes: [ { id: "l-working", name: "working" } ] } }, "working")
+    assert Linear.tagged?({ labels: { nodes: [ { id: "l-working", name: "Working" } ] } }, "working")
+    refute Linear.tagged?({ labels: { nodes: [ { id: "l-bug", name: "bug" } ] } }, "working")
+    refute Linear.tagged?({ labels: { nodes: [] } }, "working")
+    refute Linear.tagged?({}, "working")
+  end
+
+  def test_sync_tags_creates_missing_working_tag
+    calls = stub_linear(tags: [])
+
+    output, = capture_io { Linear.sync_tags }
+
+    creates = calls.select { |call| graphql?(call, "mutation IssueLabelCreate") }.map { |call| call.dig(:payload, :variables, :input) }
+    assert_equal [ { teamId: "team-1", **Linear::TAGS.first } ], creates
+    assert_includes output, "created working tag"
+  end
+
+  def test_sync_tags_is_noop_when_working_tag_exists
+    calls = stub_linear
+
+    output, = capture_io { Linear.sync_tags }
+
+    assert_empty calls.select { |call| graphql?(call, "mutation IssueLabelCreate") }
+    assert_equal "", output
+  end
+
   def test_identifier
     assert_equal "MOTO-1", Linear.identifier({ identifier: "MOTO-1" })
   end
@@ -214,7 +259,7 @@ class LinearTest < Minitest::Test
     end
   end
 
-  def stub_linear(organization: "gotte", teams: nil, states: nil, issues: nil)
+  def stub_linear(organization: "gotte", teams: nil, states: nil, issues: nil, tags: nil)
     calls = []
     Req.stubs(:call).with do |*args, **kwargs|
       opts = req_opts(args, kwargs)
@@ -297,6 +342,30 @@ class LinearTest < Minitest::Test
       calls << opts
       true
     end.returns({ data: { workflowStateArchive: { success: true } } })
+    Req.stubs(:call).with do |*args, **kwargs|
+      opts = req_opts(args, kwargs)
+      next false unless graphql?(opts, "query Tags")
+
+      calls << opts
+      true
+    end.returns(
+      {
+        data: {
+          team: {
+            labels: {
+              nodes: tags || [ { id: "l-working", name: "working", color: "#eb5757" } ],
+            },
+          },
+        },
+      },
+    )
+    Req.stubs(:call).with do |*args, **kwargs|
+      opts = req_opts(args, kwargs)
+      next false unless graphql?(opts, "mutation IssueLabelCreate")
+
+      calls << opts
+      true
+    end.returns({ data: { issueLabelCreate: { success: true } } })
     calls
   end
 end

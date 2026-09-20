@@ -14,6 +14,7 @@ class WatchTest < Minitest::Test
     assert calls.any? { |call| graphql?(call, "query Issues") }
     assert calls.any? { |call| call[:url].to_s.end_with?("/api/openchamber/sessions") }
     assert_empty calls.select { |call| graphql?(call, "mutation WorkflowState") }
+    assert_empty calls.select { |call| graphql?(call, "mutation IssueLabelCreate") }
   end
 
   def test_logs_openchamber_http_errors_without_raising
@@ -33,8 +34,13 @@ class WatchTest < Minitest::Test
 
     assert_includes output, "the server responded with status 500 for POST http://127.0.0.1:57123/api/openchamber/sessions"
     refute_includes output, "started working on MOTO-1"
-    states = calls.select { |call| graphql?(call, "mutation IssueUpdate") }.map { |call| call.dig(:payload, :variables, :input, :stateId) }
-    assert_equal [ "s-working", "s-ready" ], states
+    inputs = calls.select { |call| graphql?(call, "mutation IssueUpdate") }.map { |call| call.dig(:payload, :variables, :input) }
+    assert_equal [
+      { stateId: "s-working" },
+      { addedLabelIds: [ "l-working" ] },
+      { removedLabelIds: [ "l-working" ] },
+      { stateId: "s-ready" },
+    ], inputs
   end
 
   def test_logs_linear_http_errors_without_raising
@@ -125,6 +131,23 @@ class WatchTest < Minitest::Test
             issues: {
               nodes: items,
               pageInfo: { hasNextPage: false, endCursor: nil },
+            },
+          },
+        },
+      },
+    )
+    Req.stubs(:call).with do |*args, **kwargs|
+      opts = req_opts(args, kwargs)
+      next false unless graphql?(opts, "query Tags")
+
+      calls << opts
+      true
+    end.returns(
+      {
+        data: {
+          team: {
+            labels: {
+              nodes: [ { id: "l-working", name: "working" } ],
             },
           },
         },
