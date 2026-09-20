@@ -28,14 +28,15 @@ class Trigger
         Do this Plane card: #{Plane.url(item)}
 
         1. Open a worktree.
-        2. Read the card and all comments.
-        3. Implement the work.
-        4. If you finish:
+        2. Hard set to the current origin main.
+        3. Read the card and all comments.
+        4. Implement the work.
+        5. If you finish:
            - Commit
            - Open a GitHub PR with `gh pr create` using `GITHUB_TOKEN`
            - Link the PR to the card
            - Move the card to waiting for review
-        5. If the card is blocked or the change is not possible:
+        6. If the card is blocked or the change is not possible:
            - Comment on the card explaining why
            - Move the card to groom
       PROMPT
