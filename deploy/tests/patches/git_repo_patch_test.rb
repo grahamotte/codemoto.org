@@ -12,9 +12,9 @@ class GitRepoPatchTest < Minitest::Test
   def test_pushes_configured_repository
     github = ENV["GITHUB_REPO"]
     ENV["GITHUB_REPO"] = "git@github.com:example/app.git"
-    Cmd.expects(:local).with(includes("git remote remove github")).raises("missing")
-    Cmd.expects(:local).with(includes("git remote add github git@github.com:example/app.git"))
-    Cmd.expects(:local).with(includes("git push github master"))
+    Cmd.expects(:local).with(includes("git remote remove origin")).raises("missing")
+    Cmd.expects(:local).with(includes("git remote add origin git@github.com:example/app.git"))
+    Cmd.expects(:local).with(includes("git push origin master"))
 
     GitRepoPatch.always
   ensure
