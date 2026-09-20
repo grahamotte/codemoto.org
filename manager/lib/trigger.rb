@@ -10,14 +10,14 @@ class Trigger
         when READY
           Linear.move(item, WORKING)
           begin
-            Agent.start(work_prompt(item))
+            Agent.start(work_prompt(item), directory: Worktree.open(item))
           rescue StandardError
             Linear.move(item, READY)
             raise
           end
           puts "started working on #{Linear.identifier(item)}"
         when APPROVED
-          Agent.start(merge_prompt(item))
+          Agent.start(merge_prompt(item), directory: Worktree.directory(item))
           puts "merging #{Linear.identifier(item)}"
         end
       end
@@ -31,7 +31,7 @@ class Trigger
 
         This may be a new card or a kickback with corrections in later comments. There may already be a worktree, commits, and a PR.
 
-        1. Open a worktree.
+        1. This session is already in the card worktree. Env files and schema.rb were copied from the main checkout.
         2. Rebase onto the current origin main. Do not hard-reset; keep existing commits.
         3. Read the card and all comments.
         4. Implement the work. You may edit existing commits or add new ones.

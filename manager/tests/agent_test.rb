@@ -19,6 +19,18 @@ class AgentTest < Minitest::Test
     assert_equal "high", payload.dig(:payload, :variant)
   end
 
+  def test_posts_session_to_given_directory
+    payload = nil
+    Req.stubs(:call).with do |*args, **kwargs|
+      payload = req_opts(args, kwargs)
+      true
+    end.returns({ sessionId: "ses-1" })
+
+    Agent.start("do the work", directory: "/tmp/card")
+
+    assert_equal "/tmp/card", payload.dig(:payload, :directory)
+  end
+
   def test_omits_variant_when_blank
     ENV["AGENT_VARIANT"] = ""
     payload = nil

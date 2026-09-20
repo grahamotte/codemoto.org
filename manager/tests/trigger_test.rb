@@ -20,7 +20,7 @@ class TriggerTest < Minitest::Test
     assert_includes prompt, "Do this Linear issue: https://linear.app/gotte/issue/MOTO-1"
     assert_includes prompt, "This may be a new card or a kickback with corrections in later comments."
     assert_includes prompt, "There may already be a worktree, commits, and a PR."
-    assert_includes prompt, "Open a worktree."
+    assert_includes prompt, "This session is already in the card worktree. Env files and schema.rb were copied from the main checkout."
     assert_includes prompt, "Rebase onto the current origin main. Do not hard-reset; keep existing commits."
     assert_includes prompt, "You may edit existing commits or add new ones."
     assert_includes prompt, "Open a GitHub PR with `gh pr create` using `GITHUB_TOKEN`"
@@ -28,7 +28,9 @@ class TriggerTest < Minitest::Test
     assert_includes prompt, "Move the card to review"
     assert_includes prompt, "Move the card to planned"
     refute_includes prompt, "Hard set to the current origin main."
+    refute_includes prompt, "Open a worktree."
     refute calls.any? { |call| call[:prompt].to_s.include?("MOTO-2") }
+    assert_equal Worktree.path_for({ identifier: "MOTO-1" }), directory_for(calls, "MOTO-1")
   end
 
   def test_starts_merge_agent_for_approved_cards
@@ -47,6 +49,7 @@ class TriggerTest < Minitest::Test
     assert_includes prompt, "Rebase the GitHub PR on the card."
     assert_includes prompt, "Merge the PR with `gh pr merge` using `GITHUB_TOKEN`."
     assert_includes prompt, "Move the card to completed."
+    assert_equal Worktree.root, directory_for(calls, "MOTO-3")
   end
 
   def test_moves_ready_card_back_when_agent_fails
@@ -83,9 +86,42 @@ class TriggerTest < Minitest::Test
 
     assert_equal "started working on MOTO-1\nmerging MOTO-3\n", output
     assert_equal 1, calls.count { |call| graphql?(call, "mutation IssueUpdate") }
-    assert_includes prompt_for(calls, "MOTO-1"), "Open a worktree."
+    assert_includes prompt_for(calls, "MOTO-1"), "This session is already in the card worktree. Env files and schema.rb were copied from the main checkout."
     assert_includes prompt_for(calls, "MOTO-1"), "Rebase onto the current origin main. Do not hard-reset; keep existing commits."
     assert_includes prompt_for(calls, "MOTO-3"), "Rebase the GitHub PR on the card."
+    assert_equal Worktree.path_for({ identifier: "MOTO-1" }), directory_for(calls, "MOTO-1")
+    assert_equal Worktree.root, directory_for(calls, "MOTO-3")
+  end
+
+  def test_copies_env_and_schema_into_worktree_before_starting
+    File.write(File.join(Worktree.root, ".env.development"), "DEV=1")
+    FileUtils.mkdir_p(File.join(Worktree.root, "backend/db"))
+    File.write(File.join(Worktree.root, "backend/db/schema.rb"), "schema")
+    stub_manager(
+      items: [
+        { id: "item-1", identifier: "MOTO-1", url: "https://linear.app/gotte/issue/MOTO-1", state: { id: "s-ready", name: "Ready" } },
+      ],
+    )
+
+    capture_io { Trigger.call }
+
+    path = Worktree.path_for({ identifier: "MOTO-1" })
+    assert_equal "DEV=1", File.read(File.join(path, ".env.development"))
+    assert_equal "schema", File.read(File.join(path, "backend/db/schema.rb"))
+  end
+
+  def test_merges_from_existing_worktree
+    path = Worktree.path_for({ identifier: "MOTO-3" })
+    FileUtils.mkdir_p(path)
+    calls = stub_manager(
+      items: [
+        { id: "item-3", identifier: "MOTO-3", url: "https://linear.app/gotte/issue/MOTO-3", state: { id: "s-approved", name: "Approved" } },
+      ],
+    )
+
+    capture_io { Trigger.call }
+
+    assert_equal path, directory_for(calls, "MOTO-3")
   end
 
   def test_prints_nothing_when_nothing_is_triggered
@@ -106,11 +142,20 @@ class TriggerTest < Minitest::Test
 
   def stub_manager(items:)
     calls = []
+    ok = Object.new
+    ok.define_singleton_method(:success?) { true }
+    Open3.stubs(:capture3).with do |*args, **_kwargs|
+      if args[1] == "worktree" && args[2] == "add"
+        path = args[3] == "-b" ? args[5] : args[3]
+        FileUtils.mkdir_p(path)
+      end
+      true
+    end.returns([ "", "", ok ])
     Req.stubs(:call).with do |*args, **kwargs|
       opts = req_opts(args, kwargs)
       next false unless opts[:url].to_s.end_with?("/api/openchamber/sessions")
 
-      calls << { prompt: opts.dig(:payload, :prompt) }
+      calls << { prompt: opts.dig(:payload, :prompt), directory: opts.dig(:payload, :directory) }
       true
     end.returns({ sessionId: "ses-1" })
     Req.stubs(:call).with do |*args, **kwargs|
@@ -182,5 +227,9 @@ class TriggerTest < Minitest::Test
       .map { |call| call[:prompt] }
       .compact
       .find { |text| text.include?(identifier) }
+  end
+
+  def directory_for(calls, identifier)
+    calls.find { |call| call[:prompt].to_s.include?(identifier) }&.fetch(:directory)
   end
 end
