@@ -29,14 +29,17 @@ class Trigger
       <<~PROMPT
         Do this Plane card: #{Plane.url(item)}
 
+        This may be a new card or a kickback with corrections in later comments. There may already be a worktree, commits, and a PR.
+
         1. Open a worktree.
-        2. Hard set to the current origin main.
+        2. Rebase onto the current origin main. Do not hard-reset; keep existing commits.
         3. Read the card and all comments.
-        4. Implement the work.
+        4. Implement the work. You may edit existing commits or add new ones.
         5. If you finish:
            - Commit
            - Open a GitHub PR with `gh pr create` using `GITHUB_TOKEN`
            - Link the PR to the card
+           - Comment on the card describing what you did
            - Move the card to waiting for review
         6. If the card is blocked or the change is not possible:
            - Comment on the card explaining why

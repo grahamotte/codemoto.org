@@ -18,11 +18,16 @@ class TriggerTest < Minitest::Test
     )
     prompt = prompt_for(calls, "MOTO-1")
     assert_includes prompt, "Do this Plane card: https://app.plane.so/otte/browse/MOTO-1/"
+    assert_includes prompt, "This may be a new card or a kickback with corrections in later comments."
+    assert_includes prompt, "There may already be a worktree, commits, and a PR."
     assert_includes prompt, "Open a worktree."
-    assert_includes prompt, "Hard set to the current origin main."
+    assert_includes prompt, "Rebase onto the current origin main. Do not hard-reset; keep existing commits."
+    assert_includes prompt, "You may edit existing commits or add new ones."
     assert_includes prompt, "Open a GitHub PR with `gh pr create` using `GITHUB_TOKEN`"
+    assert_includes prompt, "Comment on the card describing what you did"
     assert_includes prompt, "Move the card to waiting for review"
     assert_includes prompt, "Move the card to groom"
+    refute_includes prompt, "Hard set to the current origin main."
     refute calls.any? { |call| call[:prompt].to_s.include?("MOTO-2") }
   end
 
@@ -79,7 +84,7 @@ class TriggerTest < Minitest::Test
     assert_equal "started working on MOTO-1\nmerging MOTO-3\n", output
     assert_equal 1, calls.count { |call| call[:method] == :patch }
     assert_includes prompt_for(calls, "MOTO-1"), "Open a worktree."
-    assert_includes prompt_for(calls, "MOTO-1"), "Hard set to the current origin main."
+    assert_includes prompt_for(calls, "MOTO-1"), "Rebase onto the current origin main. Do not hard-reset; keep existing commits."
     assert_includes prompt_for(calls, "MOTO-3"), "Rebase the GitHub PR on the card."
   end
 
