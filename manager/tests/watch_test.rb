@@ -1,0 +1,133 @@
+require_relative "test_helper"
+
+class WatchTest < Minitest::Test
+  def test_syncs_statuses_and_triggers_work
+    calls = stub_watch(
+      items: [
+        { id: "item-1", identifier: "MOTO-1", url: "https://linear.app/gotte/issue/MOTO-1", state: { id: "s-ready", name: "Ready" } },
+      ],
+    )
+
+    output, = capture_io { Watch.call }
+
+    assert_equal "started working on MOTO-1\n", output
+    assert calls.any? { |call| graphql?(call, "query States") }
+    assert calls.any? { |call| graphql?(call, "query Issues") }
+    assert calls.any? { |call| call[:url].to_s.end_with?("/api/openchamber/sessions") }
+  end
+
+  def test_logs_openchamber_http_errors_without_raising
+    calls = stub_watch(
+      items: [
+        { id: "item-1", identifier: "MOTO-1", url: "https://linear.app/gotte/issue/MOTO-1", state: { id: "s-ready", name: "Ready" } },
+      ],
+    )
+    Req.stubs(:call).with do |*args, **kwargs|
+      opts = req_opts(args, kwargs)
+      next false unless opts[:url].to_s.end_with?("/api/openchamber/sessions")
+
+      true
+    end.raises(Faraday::ServerError.new("the server responded with status 500 for POST http://127.0.0.1:57123/api/openchamber/sessions"))
+
+    output, = capture_io { Watch.call }
+
+    assert_includes output, "the server responded with status 500 for POST http://127.0.0.1:57123/api/openchamber/sessions"
+    refute_includes output, "started working on MOTO-1"
+    states = calls.select { |call| graphql?(call, "mutation IssueUpdate") }.map { |call| call.dig(:payload, :variables, :input, :stateId) }
+    assert_equal [ "s-working", "s-ready" ], states
+  end
+
+  def test_logs_linear_http_errors_without_raising
+    Req.stubs(:call).raises(Faraday::ConnectionFailed.new("Failed to open TCP connection to api.linear.app"))
+
+    output, = capture_io { Watch.call }
+
+    assert_includes output, "Failed to open TCP connection to api.linear.app"
+  end
+
+  def test_reraises_non_http_errors
+    Req.stubs(:call).raises("invalid token")
+
+    error = assert_raises(RuntimeError) { Watch.call }
+
+    assert_equal "invalid token", error.message
+  end
+
+  private
+
+  def graphql?(opts, fragment)
+    opts[:url] == Linear::HOST && opts.dig(:payload, :query).to_s.include?(fragment)
+  end
+
+  def stub_watch(items:)
+    calls = []
+    states = Linear::STATUSES.each_with_index.map do |status, index|
+      position = Linear::STATUSES.take(index).count { |item| item[:type] == status[:type] }.to_f
+      { id: "s-#{status[:name].downcase}", **status, position: }
+    end
+    Req.stubs(:call).with do |*args, **kwargs|
+      opts = req_opts(args, kwargs)
+      next false unless opts[:url].to_s.end_with?("/api/openchamber/sessions")
+
+      calls << opts
+      true
+    end.returns({ sessionId: "ses-1" })
+    Req.stubs(:call).with do |*args, **kwargs|
+      opts = req_opts(args, kwargs)
+      next false unless graphql?(opts, "query Workspace")
+
+      calls << opts
+      true
+    end.returns(
+      {
+        data: {
+          organization: { urlKey: "gotte" },
+          teams: { nodes: [ { id: "team-1", key: "MOTO" } ] },
+        },
+      },
+    )
+    Req.stubs(:call).with do |*args, **kwargs|
+      opts = req_opts(args, kwargs)
+      next false unless graphql?(opts, "query States")
+
+      calls << opts
+      true
+    end.returns(
+      {
+        data: {
+          team: {
+            states: {
+              nodes: states,
+            },
+          },
+        },
+      },
+    )
+    Req.stubs(:call).with do |*args, **kwargs|
+      opts = req_opts(args, kwargs)
+      next false unless graphql?(opts, "query Issues")
+
+      calls << opts
+      true
+    end.returns(
+      {
+        data: {
+          team: {
+            issues: {
+              nodes: items,
+              pageInfo: { hasNextPage: false, endCursor: nil },
+            },
+          },
+        },
+      },
+    )
+    Req.stubs(:call).with do |*args, **kwargs|
+      opts = req_opts(args, kwargs)
+      next false unless graphql?(opts, "mutation IssueUpdate")
+
+      calls << opts
+      true
+    end.returns({ data: { issueUpdate: { success: true } } })
+    calls
+  end
+end
