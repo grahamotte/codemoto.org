@@ -65,7 +65,7 @@ These immediate commits apply to standalone card management. Card moves and edit
 3. The card remains in `2 - In Progress/` across agent chats until an agent is satisfied that the work is complete and verified.
 4. The agent moves completed work to `3 - In Review/` and asks the user to review it. The implementation and card move remain uncommitted while review is pending.
 5. If the user reports an issue or requests a change, the agent moves the card back to `2 - In Progress/`, updates the work, verifies it, and returns the card to `3 - In Review/`.
-6. When the user explicitly approves the work, use the `commit` skill to move the card to `4 - Done/` and commit the completed work and card move together.
+6. When the user explicitly approves the work, move the card to `4 - Done/` and commit the completed work and card move together.
 7. When the user decides a card should not be worked on, the agent moves it to `5 - Won't Do/` and records the reason in the card. Cards never leave `5 - Won't Do/`. If the user later decides to address the underlying problem, create a new card in `1 - Problems to Solve/` instead of restoring the old card.
 
 ## Other
