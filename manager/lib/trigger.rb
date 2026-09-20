@@ -15,8 +15,10 @@ class Trigger
             Plane.move(item, READY)
             raise
           end
+          puts "started working on #{Plane.identifier(item)}"
         when APPROVED
           Agent.start(merge_prompt(item))
+          puts "merging #{Plane.identifier(item)}"
         end
       end
     end

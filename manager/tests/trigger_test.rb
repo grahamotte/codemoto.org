@@ -9,8 +9,9 @@ class TriggerTest < Minitest::Test
       ],
     )
 
-    Trigger.call
+    output, = capture_io { Trigger.call }
 
+    assert_equal "started working on MOTO-1\n", output
     assert_equal(
       { state: "s-working" },
       calls.find { |call| call[:method] == :patch }.fetch(:payload),
@@ -32,8 +33,9 @@ class TriggerTest < Minitest::Test
       ],
     )
 
-    Trigger.call
+    output, = capture_io { Trigger.call }
 
+    assert_equal "merging MOTO-3\n", output
     refute calls.any? { |call| call[:method] == :patch }
     prompt = prompt_for(calls, "MOTO-3")
     assert_includes prompt, "This Plane card is approved: https://app.plane.so/otte/browse/MOTO-3/"
@@ -55,8 +57,11 @@ class TriggerTest < Minitest::Test
       true
     end.raises("agent failed")
 
-    assert_raises(RuntimeError) { Trigger.call }
+    output, = capture_io do
+      assert_raises(RuntimeError) { Trigger.call }
+    end
 
+    assert_equal "", output
     states = calls.select { |call| call[:method] == :patch }.map { |call| call.dig(:payload, :state) }
     assert_equal [ "s-working", "s-ready" ], states
   end
@@ -69,12 +74,23 @@ class TriggerTest < Minitest::Test
       ],
     )
 
-    Trigger.call
+    output, = capture_io { Trigger.call }
 
+    assert_equal "started working on MOTO-1\nmerging MOTO-3\n", output
     assert_equal 1, calls.count { |call| call[:method] == :patch }
     assert_includes prompt_for(calls, "MOTO-1"), "Open a worktree."
     assert_includes prompt_for(calls, "MOTO-1"), "Hard set to the current origin main."
     assert_includes prompt_for(calls, "MOTO-3"), "Rebase the GitHub PR on the card."
+  end
+
+  def test_prints_nothing_when_nothing_is_triggered
+    stub_manager(
+      items: [
+        { id: "item-2", sequence_id: 2, state: { id: "s-groom", name: "groom" } },
+      ],
+    )
+
+    assert_output("") { Trigger.call }
   end
 
   private
