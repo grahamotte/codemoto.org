@@ -10,11 +10,15 @@ class Linear
     { name: "Completed", type: "completed", color: "#5e6ad2" },
     { name: "Canceled", type: "canceled", color: "#95a2b3" },
   ].freeze
+  TAGS = [
+    { name: "working", color: "#eb5757" },
+  ].freeze
 
   class << self
     def reset
       @team_id = nil
       @states = nil
+      @tags = nil
     end
 
     def issues
@@ -39,6 +43,27 @@ class Linear
         ISSUE_UPDATE_MUTATION,
         { id: item.fetch(:id), input: { stateId: state_id(column) } },
       )
+    end
+
+    def tag(item, name)
+      graphql(
+        ISSUE_UPDATE_MUTATION,
+        { id: item.fetch(:id), input: { addedLabelIds: [ tag_id(name) ] } },
+      )
+    end
+
+    def untag(item, name)
+      graphql(
+        ISSUE_UPDATE_MUTATION,
+        { id: item.fetch(:id), input: { removedLabelIds: [ tag_id(name) ] } },
+      )
+    end
+
+    def tagged?(item, name)
+      nodes = item.dig(:labels, :nodes)
+      return false if nodes.blank?
+
+      nodes.any? { |label| label[:name].to_s.downcase == name.to_s.downcase }
     end
 
     def column(item)
@@ -106,6 +131,26 @@ class Linear
       @states = nil
     end
 
+    def sync_tags
+      current = tag_nodes
+      TAGS.each do |want|
+        next if current.any? { |tag| tag[:name].to_s.downcase == want[:name].downcase }
+
+        graphql(
+          TAG_CREATE_MUTATION,
+          {
+            input: {
+              teamId: team_id,
+              name: want[:name],
+              color: want[:color],
+            },
+          },
+        )
+        puts "created #{want[:name]} tag"
+      end
+      @tags = nil
+    end
+
     private
 
     WORKSPACE_QUERY = <<~GQL
@@ -150,6 +195,12 @@ class Linear
                 id
                 name
               }
+              labels {
+                nodes {
+                  id
+                  name
+                }
+              }
             }
             pageInfo {
               hasNextPage
@@ -187,6 +238,27 @@ class Linear
     STATE_ARCHIVE_MUTATION = <<~GQL
       mutation WorkflowStateArchive($id: String!) {
         workflowStateArchive(id: $id) {
+          success
+        }
+      }
+    GQL
+
+    TAGS_QUERY = <<~GQL
+      query Tags($teamId: String!) {
+        team(id: $teamId) {
+          labels {
+            nodes {
+              id
+              name
+            }
+          }
+        }
+      }
+    GQL
+
+    TAG_CREATE_MUTATION = <<~GQL
+      mutation IssueLabelCreate($input: IssueLabelCreateInput!) {
+        issueLabelCreate(input: $input) {
           success
         }
       }
@@ -233,6 +305,18 @@ class Linear
 
     def state_nodes
       graphql(STATES_QUERY, { teamId: team_id }).fetch(:team).fetch(:states).fetch(:nodes)
+    end
+
+    def tag_id(name)
+      tags.fetch(name.downcase)
+    end
+
+    def tags
+      @tags ||= tag_nodes.to_h { |tag| [ tag.fetch(:name).downcase, tag.fetch(:id) ] }
+    end
+
+    def tag_nodes
+      graphql(TAGS_QUERY, { teamId: team_id }).fetch(:team).fetch(:labels).fetch(:nodes)
     end
 
     def match_state(current, want, used_ids)

@@ -48,10 +48,14 @@ Work items live in Linear. Use the Linear MCP tools. Never guess a state id.
 
 Columns, in order: `backlog`, `planned`, `ready`, `working`, `review`, `approved`, `completed`, `canceled`.
 
+Cards being processed have the `working` tag. Remove it when you finish.
+
 - Read a card: `get_issue` with the identifier in the URL (e.g. `MOTO-1`). Then `list_comments` with that issue's `id`.
 - Comment: `save_comment` with `issueId` and `body`.
 - Move a card: `save_issue` with `id` and `state` set to the column name.
 - Link a PR: `save_issue` with `id` and `links: [{ url, title }]`.
+- Tag a card: `save_issue` with `id` and `addedLabels` set to the tag names.
+- Untag a card: `save_issue` with `id` and `removedLabels` set to the tag names.
 
 ## GitHub
 
