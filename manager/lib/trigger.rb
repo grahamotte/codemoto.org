@@ -1,24 +1,24 @@
 class Trigger
-  READY = "ready for agent"
-  WORKING = "agent working"
+  READY = "ready"
+  WORKING = "working"
   APPROVED = "approved"
 
   class << self
     def call
-      Plane.work_items.each do |item|
-        case Plane.column(item)
+      Linear.issues.each do |item|
+        case Linear.column(item)
         when READY
-          Plane.move(item, WORKING)
+          Linear.move(item, WORKING)
           begin
             Agent.start(work_prompt(item))
           rescue StandardError
-            Plane.move(item, READY)
+            Linear.move(item, READY)
             raise
           end
-          puts "started working on #{Plane.identifier(item)}"
+          puts "started working on #{Linear.identifier(item)}"
         when APPROVED
           Agent.start(merge_prompt(item))
-          puts "merging #{Plane.identifier(item)}"
+          puts "merging #{Linear.identifier(item)}"
         end
       end
     end
@@ -27,7 +27,7 @@ class Trigger
 
     def work_prompt(item)
       <<~PROMPT
-        Do this Plane card: #{Plane.url(item)}
+        Do this Linear issue: #{Linear.url(item)}
 
         This may be a new card or a kickback with corrections in later comments. There may already be a worktree, commits, and a PR.
 
@@ -40,21 +40,21 @@ class Trigger
            - Open a GitHub PR with `gh pr create` using `GITHUB_TOKEN`
            - Link the PR to the card
            - Comment on the card describing what you did
-           - Move the card to waiting for review
+           - Move the card to review
         6. If the card is blocked or the change is not possible:
            - Comment on the card explaining why
-           - Move the card to groom
+           - Move the card to planned
       PROMPT
     end
 
     def merge_prompt(item)
       <<~PROMPT
-        This Plane card is approved: #{Plane.url(item)}
+        This Linear issue is approved: #{Linear.url(item)}
 
         1. Rebase the GitHub PR on the card. Resolve merge conflicts.
         2. Merge the PR with `gh pr merge` using `GITHUB_TOKEN`.
         3. Remove any worktrees created for this card.
-        4. Move the card to done.
+        4. Move the card to completed.
       PROMPT
     end
   end

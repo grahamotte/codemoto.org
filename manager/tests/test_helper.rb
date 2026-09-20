@@ -20,9 +20,9 @@ end
 Req.define_singleton_method(:call) { |*, **| raise UnsafeTestOperation, "Req.call must be stubbed in manager tests" }
 
 {
-  "PLANE_TOKEN" => "plane-token",
-  "PLANE_WORKSPACE" => "otte",
-  "PLANE_PROJECT" => "MOTO",
+  "LINEAR_TOKEN" => "linear-token",
+  "LINEAR_WORKSPACE" => "gotte",
+  "LINEAR_TEAM" => "MOTO",
   "AGENT_RUNNER" => "openchamber",
   "AGENT_MODEL" => "xai/grok-4.6",
   "AGENT_VARIANT" => "high",
@@ -31,7 +31,7 @@ Req.define_singleton_method(:call) { |*, **| raise UnsafeTestOperation, "Req.cal
 
 module ManagerTestIsolation
   def before_setup
-    Plane.reset
+    Linear.reset
     super
   end
 end

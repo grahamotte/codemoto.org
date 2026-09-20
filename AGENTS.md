@@ -41,16 +41,16 @@ The "Repo Specific" section blow contains rules specific to this repo only.
 - After every code change, run the whole suite with `mise test`.
 - Do not write integration tests.
 
-## Plane
+## Linear
 
-Work items live in Plane. Use the Plane MCP tools. Never guess a state id.
+Work items live in Linear. Use the Linear MCP tools. Never guess a state id.
 
-Columns, in order: `backlog`, `groom`, `ready for agent`, `agent working`, `waiting for review`, `approved`, `done`, `cancelled`.
+Columns, in order: `backlog`, `planned`, `ready`, `working`, `review`, `approved`, `completed`, `canceled`.
 
-- Read a card: `workitem retrieve_by_identifier` with the identifier in the URL (e.g. `MOTO-1`). Then `workitem_comment list` with that `project` and `id`.
-- Comment: `workitem_comment create` with `project_id`, `workitem_id`, and `comment_html`.
-- Move a card: `state list` for the project, pick the state whose `name` matches the column case-insensitively, then `workitem update` with that state's id.
-- Link a PR: `workitem_link create` with `project_id`, `workitem_id`, and the PR `url`.
+- Read a card: `get_issue` with the identifier in the URL (e.g. `MOTO-1`). Then `list_comments` with that issue's `id`.
+- Comment: `save_comment` with `issueId` and `body`.
+- Move a card: `save_issue` with `id` and `state` set to the column name.
+- Link a PR: `save_issue` with `id` and `links: [{ url, title }]`.
 
 ## GitHub
 
@@ -72,7 +72,7 @@ Open pull requests on GitHub with `gh`, using `GITHUB_TOKEN` from the environmen
 - `frontend/` - React website.
 - `frontend/subdomains.json` - Website subdomain configuration.
 - `gems/` - Shared Ruby gems.
-- `manager/` - Plane work-item polling and agent triggers.
+- `manager/` - Linear issue polling and agent triggers.
 - `scripts/` - General-purpose scripts.
 - `mise.toml` - Project tooling and task definitions.
 
