@@ -1,7 +1,7 @@
 class GitRepoPatch < BasePatch
   class << self
     def always
-      push_to("github", Constants.github_repo)
+      push_to("origin", Constants.github_repo)
     end
 
     private
