@@ -82,6 +82,14 @@ class Linear
       item.fetch(:url)
     end
 
+    def model(item)
+      labeled(item, "model")
+    end
+
+    def variant(item)
+      labeled(item, "variant")
+    end
+
     def sync_statuses
       current = state_nodes
       used_ids = []
@@ -162,6 +170,21 @@ class Linear
     end
 
     private
+
+    def labeled(item, key)
+      nodes = item.dig(:labels, :nodes)
+      return nil if nodes.blank?
+
+      prefix = "#{key}:"
+      nodes.each do |label|
+        name = label[:name].to_s
+        next unless name.downcase.start_with?(prefix)
+
+        value = name.split(":", 2).last.strip
+        return value if value.present?
+      end
+      nil
+    end
 
     WORKSPACE_QUERY = <<~GQL
       query Workspace($key: String!) {

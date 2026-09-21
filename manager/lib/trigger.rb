@@ -39,7 +39,12 @@ class Trigger
     def start_agent(item, prompt, directory:)
       Linear.tag(item, WORKING)
       begin
-        Agent.start(prompt, directory:)
+        Agent.start(
+          prompt,
+          directory:,
+          model: Linear.model(item),
+          variant: Linear.variant(item),
+        )
       rescue StandardError
         Linear.untag(item, WORKING)
         raise
