@@ -123,6 +123,44 @@ class LinearTest < Minitest::Test
     assert_equal "https://linear.app/gotte/issue/MOTO-1", Linear.url({ url: "https://linear.app/gotte/issue/MOTO-1" })
   end
 
+  def test_model_from_label
+    assert_equal(
+      "xai/grok-4.6",
+      Linear.model({ labels: { nodes: [ { id: "l-model", name: "model: xai/grok-4.6" } ] } }),
+    )
+  end
+
+  def test_variant_from_label
+    assert_equal(
+      "medium",
+      Linear.variant({ labels: { nodes: [ { id: "l-variant", name: "variant: medium" } ] } }),
+    )
+  end
+
+  def test_model_and_variant_are_case_insensitive_keys
+    item = {
+      labels: {
+        nodes: [
+          { id: "l-model", name: "Model: Anthropic/Claude" },
+          { id: "l-variant", name: "VARIANT: high" },
+        ],
+      },
+    }
+
+    assert_equal "Anthropic/Claude", Linear.model(item)
+    assert_equal "high", Linear.variant(item)
+  end
+
+  def test_model_and_variant_nil_without_matching_labels
+    item = { labels: { nodes: [ { id: "l-working", name: "working" } ] } }
+
+    assert_nil Linear.model(item)
+    assert_nil Linear.variant(item)
+    assert_nil Linear.model({})
+    assert_nil Linear.variant({ labels: { nodes: [] } })
+    assert_nil Linear.model({ labels: { nodes: [ { id: "l-model", name: "model:" } ] } })
+  end
+
   def test_selects_team_by_key
     calls = stub_linear(
       teams: [

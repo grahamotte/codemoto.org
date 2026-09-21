@@ -35,6 +35,33 @@ class TriggerTest < Minitest::Test
     refute_includes prompt, "Open a worktree."
     refute calls.any? { |call| call[:prompt].to_s.include?("MOTO-2") }
     assert_equal Worktree.path_for({ identifier: "MOTO-1" }), directory_for(calls, "MOTO-1")
+    assert_equal "xai/grok-4.6", session_for(calls, "MOTO-1").fetch(:model)
+    assert_equal "high", session_for(calls, "MOTO-1").fetch(:variant)
+  end
+
+  def test_starts_agent_with_model_and_variant_labels
+    calls = stub_manager(
+      items: [
+        {
+          id: "item-1",
+          identifier: "MOTO-1",
+          url: "https://linear.app/gotte/issue/MOTO-1",
+          state: { id: "s-ready", name: "Ready" },
+          labels: {
+            nodes: [
+              { id: "l-model", name: "model: anthropic/claude-sonnet-4" },
+              { id: "l-variant", name: "variant: medium" },
+            ],
+          },
+        },
+      ],
+    )
+
+    capture_io { Trigger.call }
+
+    session = session_for(calls, "MOTO-1")
+    assert_equal "anthropic/claude-sonnet-4", session.fetch(:model)
+    assert_equal "medium", session.fetch(:variant)
   end
 
   def test_starts_merge_agent_for_approved_cards
@@ -303,7 +330,12 @@ class TriggerTest < Minitest::Test
       opts = req_opts(args, kwargs)
       next false unless opts[:url].to_s.end_with?("/api/openchamber/sessions")
 
-      calls << { prompt: opts.dig(:payload, :prompt), directory: opts.dig(:payload, :directory) }
+      calls << {
+        prompt: opts.dig(:payload, :prompt),
+        directory: opts.dig(:payload, :directory),
+        model: opts.dig(:payload, :model),
+        variant: opts.dig(:payload, :variant),
+      }
       true
     end.returns({ sessionId: "ses-1" })
     Req.stubs(:call).with do |*args, **kwargs|
@@ -399,6 +431,10 @@ class TriggerTest < Minitest::Test
   end
 
   def directory_for(calls, identifier)
-    calls.find { |call| call[:prompt].to_s.include?(identifier) }&.fetch(:directory)
+    session_for(calls, identifier)&.fetch(:directory)
+  end
+
+  def session_for(calls, identifier)
+    calls.find { |call| call[:prompt].to_s.include?(identifier) }
   end
 end
