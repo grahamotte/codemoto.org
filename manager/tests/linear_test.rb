@@ -96,21 +96,35 @@ class LinearTest < Minitest::Test
     refute Linear.tagged?({}, "working")
   end
 
-  def test_sync_tags_creates_missing_working_tag
+  def test_sync_tags_creates_missing_tags
     calls = stub_linear(tags: [])
 
     output, = capture_io { Linear.sync_tags }
 
     creates = calls.select { |call| graphql?(call, "mutation IssueLabelCreate") }.map { |call| call.dig(:payload, :variables, :input) }
-    assert_equal [ { teamId: "team-1", **Linear::TAGS.first } ], creates
+    assert_equal Linear::TAGS.map { |tag| { teamId: "team-1", **tag } }, creates
     assert_includes output, "created working tag"
+    assert_includes output, "created variant: high tag"
+    assert_includes output, "created model: xai/grok-4.6 tag"
   end
 
-  def test_sync_tags_is_noop_when_working_tag_exists
+  def test_sync_tags_is_noop_when_already_synced
     calls = stub_linear
 
     output, = capture_io { Linear.sync_tags }
 
+    assert_empty calls.select { |call| graphql?(call, "mutation IssueLabelCreate") }
+    assert_empty calls.select { |call| graphql?(call, "mutation IssueLabelUpdate") }
+    assert_equal "", output
+  end
+
+  def test_sync_tags_updates_mismatched_color
+    calls = stub_linear(tags: synced_tags.map { |tag| tag[:name] == "working" ? tag.merge(color: "#eb5757") : tag })
+
+    output, = capture_io { Linear.sync_tags }
+
+    updates = calls.select { |call| graphql?(call, "mutation IssueLabelUpdate") }.map { |call| call.dig(:payload, :variables) }
+    assert_equal [ { id: "l-working", input: { color: "#f2c94c" } } ], updates
     assert_empty calls.select { |call| graphql?(call, "mutation IssueLabelCreate") }
     assert_equal "", output
   end
@@ -218,6 +232,7 @@ class LinearTest < Minitest::Test
 
     assert_equal "Planned", updates.find { |variables| variables[:id] == "s-todo" }.dig(:input, :name)
     assert_equal "Ready", updates.find { |variables| variables[:id] == "s-progress" }.dig(:input, :name)
+    assert_equal "#26b5ce", updates.find { |variables| variables[:id] == "s-progress" }.dig(:input, :color)
     assert_equal "Completed", updates.find { |variables| variables[:id] == "s-done" }.dig(:input, :name)
     assert_equal [ "Working", "Review", "Approved" ], creates.map { |input| input[:name] }
     assert_equal [ 3.0, 4.0, 5.0 ], creates.map { |input| input[:position] }
@@ -316,6 +331,12 @@ class LinearTest < Minitest::Test
     Linear::STATUSES.each_with_index.map do |status, index|
       position = index.to_f
       { id: "s-#{status[:name].downcase}", **status, position: }
+    end
+  end
+
+  def synced_tags
+    Linear::TAGS.map do |tag|
+      { id: "l-#{tag[:name].downcase}", **tag }
     end
   end
 
@@ -426,7 +447,7 @@ class LinearTest < Minitest::Test
         data: {
           team: {
             labels: {
-              nodes: tags || [ { id: "l-working", name: "working", color: "#eb5757" } ],
+              nodes: tags || synced_tags,
             },
           },
         },
@@ -439,6 +460,13 @@ class LinearTest < Minitest::Test
       calls << opts
       true
     end.returns({ data: { issueLabelCreate: { success: true } } })
+    Req.stubs(:call).with do |*args, **kwargs|
+      opts = req_opts(args, kwargs)
+      next false unless graphql?(opts, "mutation IssueLabelUpdate")
+
+      calls << opts
+      true
+    end.returns({ data: { issueLabelUpdate: { success: true } } })
     calls
   end
 end
