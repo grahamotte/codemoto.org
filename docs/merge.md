@@ -96,7 +96,7 @@ Create a Linear team for the app. Put its key in `LINEAR_TEAM`. Configure Linear
 
 Columns, in order: `backlog`, `planned`, `ready`, `working`, `review`, `approved`, `completed`, `canceled`.
 
-Run `mise manager:sync` to sync those workflow names and create the `working` tag. Run it only against the team this repo should own.
+Run `mise manager:sync` to sync those workflow names and colors, and to create the default tags (`working`, `variant: …`, `model: …`). Run it only against the team this repo should own.
 
 ### Kanban cards
 
