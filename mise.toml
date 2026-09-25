@@ -397,3 +397,53 @@ run = "cd manager && bundle exec ruby goto_main.rb"
 [tasks."manager:gotomainall"]
 depends = ["dependencies:manager"]
 run = "cd manager && bundle exec ruby goto_main_all.rb"
+
+#
+# Linear
+#
+
+[tasks."linear:show"]
+depends = ["dependencies:manager"]
+usage = 'arg "<card>" help="Card identifier, e.g. MOTO-1"'
+run = 'cd manager && bundle exec ruby card.rb show "$usage_card"'
+
+[tasks."linear:move"]
+depends = ["dependencies:manager"]
+usage = """
+arg "<card>" help="Card identifier, e.g. MOTO-1"
+arg "<column>" help="Column name" choices "backlog" "planned" "ready" "working" "review" "approved" "completed" "canceled"
+"""
+run = 'cd manager && bundle exec ruby card.rb move "$usage_card" "$usage_column"'
+
+[tasks."linear:comment"]
+depends = ["dependencies:manager"]
+usage = """
+arg "<card>" help="Card identifier, e.g. MOTO-1"
+arg "<body>" help="Markdown comment body"
+"""
+run = 'cd manager && bundle exec ruby card.rb comment "$usage_card" "$usage_body"'
+
+[tasks."linear:link"]
+depends = ["dependencies:manager"]
+usage = """
+arg "<card>" help="Card identifier, e.g. MOTO-1"
+arg "<url>" help="URL to link"
+arg "[title]" help="Link title"
+"""
+run = 'cd manager && bundle exec ruby card.rb link "$usage_card" "$usage_url" "${usage_title:-}"'
+
+[tasks."linear:tag"]
+depends = ["dependencies:manager"]
+usage = """
+arg "<card>" help="Card identifier, e.g. MOTO-1"
+arg "<tag>" help="Tag name"
+"""
+run = 'cd manager && bundle exec ruby card.rb tag "$usage_card" "$usage_tag"'
+
+[tasks."linear:untag"]
+depends = ["dependencies:manager"]
+usage = """
+arg "<card>" help="Card identifier, e.g. MOTO-1"
+arg "<tag>" help="Tag name"
+"""
+run = 'cd manager && bundle exec ruby card.rb untag "$usage_card" "$usage_tag"'

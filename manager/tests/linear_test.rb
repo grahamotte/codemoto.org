@@ -88,6 +88,71 @@ class LinearTest < Minitest::Test
     assert_equal({ id: "item-1", input: { removedLabelIds: [ "l-working" ] } }, payload.dig(:payload, :variables))
   end
 
+  def test_issue_fetches_by_identifier
+    calls = stub_linear(issue: { id: "item-1", identifier: "MOTO-1", title: "Fix it", team: { key: "MOTO" } })
+
+    assert_equal "Fix it", Linear.issue("MOTO-1").fetch(:title)
+
+    payload = calls.find { |call| graphql?(call, "query Issue(") }
+    assert_equal({ id: "MOTO-1" }, payload.dig(:payload, :variables))
+    assert calls.any? { |call| graphql?(call, "query Workspace") }
+  end
+
+  def test_issue_rejects_other_team
+    stub_linear(issue: { id: "item-1", identifier: "APP-1", team: { key: "APP" } })
+
+    error = assert_raises(RuntimeError) { Linear.issue("APP-1") }
+
+    assert_equal 'Linear issue APP-1 is in team "APP", expected "MOTO"', error.message
+  end
+
+  def test_issue_checks_workspace_before_fetching
+    calls = stub_linear(organization: "other")
+
+    error = assert_raises(RuntimeError) { Linear.issue("MOTO-1") }
+
+    assert_equal 'Linear workspace is "other", expected "gotte"', error.message
+    assert_empty calls.select { |call| graphql?(call, "query Issue(") }
+  end
+
+  def test_comment_creates_comment
+    calls = stub_linear
+
+    Linear.comment({ id: "item-1" }, "Done")
+
+    payload = calls.find { |call| graphql?(call, "mutation CommentCreate") }
+    assert_equal({ input: { issueId: "item-1", body: "Done" } }, payload.dig(:payload, :variables))
+  end
+
+  def test_link_attaches_url_with_title
+    calls = stub_linear
+
+    Linear.link({ id: "item-1" }, "https://github.com/o/r/pull/1", "PR")
+
+    payload = calls.find { |call| graphql?(call, "mutation AttachmentLinkURL") }
+    assert_equal(
+      { issueId: "item-1", url: "https://github.com/o/r/pull/1", title: "PR" },
+      payload.dig(:payload, :variables),
+    )
+  end
+
+  def test_link_omits_blank_title
+    calls = stub_linear
+
+    Linear.link({ id: "item-1" }, "https://github.com/o/r/pull/1", nil)
+
+    payload = calls.find { |call| graphql?(call, "mutation AttachmentLinkURL") }
+    assert_equal({ issueId: "item-1", url: "https://github.com/o/r/pull/1" }, payload.dig(:payload, :variables))
+  end
+
+  def test_tag_raises_for_unknown_tag
+    stub_linear
+
+    error = assert_raises(RuntimeError) { Linear.tag({ id: "item-1" }, "nope") }
+
+    assert_equal 'Linear tag "nope" not found', error.message
+  end
+
   def test_tagged_from_label_names
     assert Linear.tagged?({ labels: { nodes: [ { id: "l-working", name: "working" } ] } }, "working")
     assert Linear.tagged?({ labels: { nodes: [ { id: "l-working", name: "Working" } ] } }, "working")
@@ -353,8 +418,29 @@ class LinearTest < Minitest::Test
     end
   end
 
-  def stub_linear(organization: "gotte", teams: nil, states: nil, issues: nil, tags: nil)
+  def stub_linear(organization: "gotte", teams: nil, states: nil, issues: nil, tags: nil, issue: nil)
     calls = []
+    Req.stubs(:call).with do |*args, **kwargs|
+      opts = req_opts(args, kwargs)
+      next false unless graphql?(opts, "query Issue(")
+
+      calls << opts
+      true
+    end.returns({ data: { issue: issue || { id: "item-1", identifier: "MOTO-1", team: { key: "MOTO" } } } })
+    Req.stubs(:call).with do |*args, **kwargs|
+      opts = req_opts(args, kwargs)
+      next false unless graphql?(opts, "mutation CommentCreate")
+
+      calls << opts
+      true
+    end.returns({ data: { commentCreate: { success: true } } })
+    Req.stubs(:call).with do |*args, **kwargs|
+      opts = req_opts(args, kwargs)
+      next false unless graphql?(opts, "mutation AttachmentLinkURL")
+
+      calls << opts
+      true
+    end.returns({ data: { attachmentLinkURL: { success: true } } })
     Req.stubs(:call).with do |*args, **kwargs|
       opts = req_opts(args, kwargs)
       next false unless graphql?(opts, "query Workspace")

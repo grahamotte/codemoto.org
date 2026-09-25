@@ -114,11 +114,11 @@ After resolving conflicts, run `mise dependencies` then `mise test`.
 
 ### Linear
 
-Create a Linear team for the app. Put its key in `LINEAR_TEAM`. Configure Linear MCP for agents; use column names, never guessed state ids.
+Create a Linear team for the app. Put its key in `LINEAR_TEAM`. Agents use the `mise linear:*` tasks with `LINEAR_TOKEN`, `LINEAR_WORKSPACE`, and `LINEAR_TEAM`; no Linear MCP is needed.
 
 Columns, in order: `backlog`, `planned`, `ready`, `working`, `review`, `approved`, `completed`, `canceled`.
 
-Run `mise manager:sync` to sync those workflow names and colors, and to create the default tags (`working`, `variant: …`, `model: …`). Run it only against the team this repo should own. On a new team it renames Linear's default `Todo`, `In Progress`, `In Review`, and `Done` states.
+Run `mise manager:sync` to sync those workflow names and colors, and to create the default tags (`working`, `interactive`, `variant: …`, `model: …`). Run it only against the team this repo should own. On a new team it renames Linear's default `Todo`, `In Progress`, `In Review`, and `Done` states.
 
 ### Kanban cards
 

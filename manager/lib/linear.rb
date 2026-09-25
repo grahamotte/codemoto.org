@@ -12,6 +12,7 @@ class Linear
   ].freeze
   TAGS = [
     { name: "working", color: "#f2c94c" },
+    { name: "interactive", color: "#bb87fc" },
     { name: "variant: low", color: "#4cb782" },
     { name: "variant: medium", color: "#4cb782" },
     { name: "variant: high", color: "#4cb782" },
@@ -41,6 +42,23 @@ class Linear
         break if after.blank?
       end
       nodes
+    end
+
+    def issue(identifier)
+      team_id
+      found = graphql(ISSUE_QUERY, { id: identifier }).fetch(:issue)
+      key = found.dig(:team, :key)
+      raise "Linear issue #{identifier} is in team #{key.inspect}, expected #{team.inspect}" unless key == team
+
+      found
+    end
+
+    def comment(item, body)
+      graphql(COMMENT_CREATE_MUTATION, { input: { issueId: item.fetch(:id), body: } })
+    end
+
+    def link(item, url, title)
+      graphql(ATTACHMENT_LINK_MUTATION, { issueId: item.fetch(:id), url:, title: }.compact)
     end
 
     def move(item, column)
@@ -254,6 +272,62 @@ class Linear
       }
     GQL
 
+    ISSUE_QUERY = <<~GQL
+      query Issue($id: String!) {
+        issue(id: $id) {
+          id
+          identifier
+          title
+          url
+          description
+          team {
+            key
+          }
+          state {
+            id
+            name
+          }
+          labels {
+            nodes {
+              id
+              name
+            }
+          }
+          attachments {
+            nodes {
+              title
+              url
+            }
+          }
+          comments {
+            nodes {
+              body
+              createdAt
+              user {
+                name
+              }
+            }
+          }
+        }
+      }
+    GQL
+
+    COMMENT_CREATE_MUTATION = <<~GQL
+      mutation CommentCreate($input: CommentCreateInput!) {
+        commentCreate(input: $input) {
+          success
+        }
+      }
+    GQL
+
+    ATTACHMENT_LINK_MUTATION = <<~GQL
+      mutation AttachmentLinkURL($issueId: String!, $url: String!, $title: String) {
+        attachmentLinkURL(issueId: $issueId, url: $url, title: $title) {
+          success
+        }
+      }
+    GQL
+
     ISSUE_UPDATE_MUTATION = <<~GQL
       mutation IssueUpdate($id: String!, $input: IssueUpdateInput!) {
         issueUpdate(id: $id, input: $input) {
@@ -360,7 +434,7 @@ class Linear
     end
 
     def tag_id(name)
-      tags.fetch(name.downcase)
+      tags.fetch(name.to_s.downcase) { raise "Linear tag #{name.inspect} not found" }
     end
 
     def tags
