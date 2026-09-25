@@ -151,7 +151,13 @@ end'
 
 ### Manager
 
-OpenChamber must be listening on `http://127.0.0.1:57123`. `GITHUB_TOKEN` must work with `gh`. `origin` must be GitHub.
+`AGENT_RUNNER` picks where agents run. `GITHUB_TOKEN` must work with `gh`. `origin` must be GitHub.
+
+- `openchamber`: OpenChamber must be listening on `http://127.0.0.1:57123`. Uses `AGENT_MODEL` and `AGENT_VARIANT`, overridden by `model:` and `variant:` card tags.
+- `claude`: opens a new session in the Claude desktop app with `claude://code/new`, pointed at the card worktree, then presses Enter. Set the Code tab's default permission mode to Bypass permissions and start sessions in the selected folder rather than a new worktree.
+- `codex`: opens a new thread in the Codex desktop app with `codex://threads/new`, pointed at the card worktree, then presses Enter. Set Codex to full access (`approval_policy = "never"` and `sandbox_mode = "danger-full-access"` in `~/.codex/config.toml`) and run threads locally rather than in a new worktree.
+
+`claude` and `codex` ignore the model and variant settings; the app's defaults apply. They send the Enter key with `osascript`, so the terminal that runs `mise manager:watch` needs Accessibility access (System Settings → Privacy & Security → Accessibility). Keep the Mac unlocked while the manager runs, and don't type while it starts a session.
 
 ```sh
 mise manager:sync
