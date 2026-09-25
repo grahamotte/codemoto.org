@@ -351,7 +351,8 @@ run = [
   "git checkout master",
   "echo \"Merge recovery point: $(git rev-parse HEAD)\"",
   "if git remote get-url upstream >/dev/null 2>&1; then git remote set-url upstream git@github.com:grahamotte/codemoto.org.git; else git remote add upstream git@github.com:grahamotte/codemoto.org.git; fi",
-  "git fetch upstream master",
+  "git config remote.upstream.tagOpt --no-tags",
+  "git fetch --no-tags upstream master",
   "if ! git merge-base HEAD upstream/master >/dev/null; then echo 'Error: This repository does not share history with Code Moto.'; exit 1; fi",
   "git merge --no-edit --no-ff upstream/master",
 ]

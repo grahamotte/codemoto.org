@@ -39,7 +39,8 @@ Do not run the **old** `mise merge` until this merge lands. That task still rewr
 
 ```sh
 git checkout master
-git fetch upstream master
+git config remote.upstream.tagOpt --no-tags
+git fetch --no-tags upstream master
 git merge --no-edit --no-ff upstream/master
 ```
 
