@@ -67,6 +67,7 @@ Open pull requests on GitHub with `gh`, using `GITHUB_TOKEN` from the environmen
 ## File Structure
 
 - `.agents/skills/` - Project-specific agent skills.
+- `.claude/skills` - Symlink to `.agents/skills/` for Claude Code.
 - `.env.*` - Environment configuration and secrets. Do not expose secret values.
 - `apps/` - Mobile apps for iOS and Android.
 - `apps/config.json` - Mobile app release configuration.
