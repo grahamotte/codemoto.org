@@ -35,9 +35,11 @@ git remote add origin git@github.com:grahamotte/<app>.git
 
 git remote add upstream git@github.com:grahamotte/codemoto.org.git
 # or: git remote set-url upstream git@github.com:grahamotte/codemoto.org.git
+
+git config remote.origin.gh-resolved base
 ```
 
-`origin` must be the app's GitHub repo. The manager fetches `origin`, and agents open PRs with `gh pr create`.
+`origin` must be the app's GitHub repo. The manager fetches `origin`, and agents open PRs with `gh pr create`. With both `origin` and `upstream` on GitHub, `gh` picks `upstream` unless `remote.origin.gh-resolved` is `base`.
 
 Do not run the **old** `mise merge` until this merge lands. That task still rewrites `upstream` to Codeberg. Merge GitHub Code Moto by hand this once:
 

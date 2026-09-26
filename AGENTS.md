@@ -64,7 +64,7 @@ When the user hands you a Linear card, use the `interactive-card` skill, unless 
 
 ## GitHub
 
-Open pull requests on GitHub with `gh`, using `GITHUB_TOKEN` from the environment.
+Open pull requests on GitHub with `gh`, using `GITHUB_TOKEN` from the environment. `gh` targets `origin`, the app repo from `GITHUB_REPO`, never `upstream`: `mise merge` and `mise push` set `origin` as the `gh` default, and the `mise` env exports it as `GH_REPO`.
 
 - Push the branch, then `gh pr create`.
 - Merge with `gh pr merge`.
