@@ -374,6 +374,30 @@ class LinearTest < Minitest::Test
     assert_equal({ key: "MOTO" }, workspace.dig(:payload, :variables))
   end
 
+  def test_sync_git_automations_deletes_rules
+    calls = stub_linear(git_automations: default_git_automations)
+
+    output, = capture_io { Linear.sync_git_automations }
+
+    deletes = calls.select { |call| graphql?(call, "mutation GitAutomationStateDelete") }
+    query = calls.find { |call| graphql?(call, "query GitAutomationStates") }
+    assert_equal({ teamId: "team-1" }, query.dig(:payload, :variables))
+    assert_equal [ "ga-start", "ga-review", "ga-merge" ], deletes.map { |call| call.dig(:payload, :variables, :id) }
+    assert_includes output, "removed git automation start (In Progress)"
+    assert_includes output, "removed git automation review (In Review)"
+    assert_includes output, "removed git automation merge (Done)"
+  end
+
+  def test_sync_git_automations_is_noop_when_none
+    calls = stub_linear
+
+    output, = capture_io { Linear.sync_git_automations }
+
+    assert_empty calls.select { |call| graphql?(call, "mutation GitAutomationStateDelete") }
+    assert calls.any? { |call| graphql?(call, "query GitAutomationStates") }
+    assert_equal "", output
+  end
+
   private
 
   def graphql?(opts, fragment)
@@ -418,7 +442,15 @@ class LinearTest < Minitest::Test
     end
   end
 
-  def stub_linear(organization: "gotte", teams: nil, states: nil, issues: nil, tags: nil, issue: nil)
+  def default_git_automations
+    [
+      { id: "ga-start", event: "start", state: { name: "In Progress" } },
+      { id: "ga-review", event: "review", state: { name: "In Review" } },
+      { id: "ga-merge", event: "merge", state: { name: "Done" } },
+    ]
+  end
+
+  def stub_linear(organization: "gotte", teams: nil, states: nil, issues: nil, tags: nil, issue: nil, git_automations: nil)
     calls = []
     Req.stubs(:call).with do |*args, **kwargs|
       opts = req_opts(args, kwargs)
@@ -553,6 +585,30 @@ class LinearTest < Minitest::Test
       calls << opts
       true
     end.returns({ data: { issueLabelUpdate: { success: true } } })
+    Req.stubs(:call).with do |*args, **kwargs|
+      opts = req_opts(args, kwargs)
+      next false unless graphql?(opts, "query GitAutomationStates")
+
+      calls << opts
+      true
+    end.returns(
+      {
+        data: {
+          team: {
+            gitAutomationStates: {
+              nodes: git_automations || [],
+            },
+          },
+        },
+      },
+    )
+    Req.stubs(:call).with do |*args, **kwargs|
+      opts = req_opts(args, kwargs)
+      next false unless graphql?(opts, "mutation GitAutomationStateDelete")
+
+      calls << opts
+      true
+    end.returns({ data: { gitAutomationStateDelete: { success: true } } })
     calls
   end
 end
