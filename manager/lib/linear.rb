@@ -197,6 +197,13 @@ class Linear
       @tags = nil
     end
 
+    def sync_git_automations
+      git_automation_nodes.each do |rule|
+        graphql(GIT_AUTOMATION_STATE_DELETE_MUTATION, { id: rule.fetch(:id) })
+        puts "removed git automation #{rule.fetch(:event)} (#{rule.dig(:state, :name)})"
+      end
+    end
+
     private
 
     def labeled(item, key)
@@ -390,6 +397,30 @@ class Linear
       }
     GQL
 
+    GIT_AUTOMATION_STATES_QUERY = <<~GQL
+      query GitAutomationStates($teamId: String!) {
+        team(id: $teamId) {
+          gitAutomationStates(first: 50) {
+            nodes {
+              id
+              event
+              state {
+                name
+              }
+            }
+          }
+        }
+      }
+    GQL
+
+    GIT_AUTOMATION_STATE_DELETE_MUTATION = <<~GQL
+      mutation GitAutomationStateDelete($id: String!) {
+        gitAutomationStateDelete(id: $id) {
+          success
+        }
+      }
+    GQL
+
     def workspace
       ENV.fetch("LINEAR_WORKSPACE")
     end
@@ -443,6 +474,13 @@ class Linear
 
     def tag_nodes
       graphql(TAGS_QUERY, { teamId: team_id }).fetch(:team).fetch(:labels).fetch(:nodes)
+    end
+
+    def git_automation_nodes
+      graphql(GIT_AUTOMATION_STATES_QUERY, { teamId: team_id })
+        .fetch(:team)
+        .fetch(:gitAutomationStates)
+        .fetch(:nodes)
     end
 
     def sync_status_positions(live)

@@ -120,7 +120,7 @@ Create a Linear team for the app. Put its key in `LINEAR_TEAM`. Agents use the `
 
 Columns, in order: `backlog`, `planned`, `ready`, `working`, `review`, `approved`, `completed`, `canceled`.
 
-Run `mise manager:sync` to sync those workflow names and colors, and to create the default tags (`working`, `interactive`, `variant: …`, `model: …`). Run it only against the team this repo should own. On a new team it renames Linear's default `Todo`, `In Progress`, `In Review`, and `Done` states.
+Run `mise manager:sync` to sync those workflow names and colors, create the default tags (`working`, `interactive`, `variant: …`, `model: …`), and clear git automations. Run it only against the team this repo should own. On a new team it renames Linear's default `Todo`, `In Progress`, `In Review`, and `Done` states. Sync also deletes Linear's GitHub git automations (branch/draft PR, PR opened, PR merged); the manager moves cards itself.
 
 ### Kanban cards
 
